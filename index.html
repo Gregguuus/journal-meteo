@@ -5,543 +5,760 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Journal Météo · Domont</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+/* ─────────────────────────────────────────
+   RESET & ROOT
+───────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg:#070d1a;
-  --glass:rgba(255,255,255,0.03);
-  --glass-hover:rgba(255,255,255,0.055);
-  --border:rgba(255,255,255,0.07);
-  --border-hi:rgba(255,255,255,0.14);
-  --text:#dde8f2;
-  --muted:#607a94;
-  --dim:#2a4060;
-  --c24:#f0a000;
-  --c25:#e04545;
-  --c26:#3aa0e0;
-  --r:18px;
+  --bg:#04080f;
+  --s0:#07101e;
+  --s1:#0c1828;
+  --s2:#111f35;
+  --b0:rgba(255,255,255,.04);
+  --b1:rgba(255,255,255,.08);
+  --b2:rgba(255,255,255,.14);
+  --tx:#e4f0ff;
+  --t2:#527494;
+  --t3:#1e3550;
+  --c24:#f59e0b;
+  --c25:#ef4444;
+  --c26:#0ea5e9;
+  --r:16px;
 }
-
+html{scroll-behavior:smooth}
 body{
   background:var(--bg);
-  color:var(--text);
+  color:var(--tx);
   font-family:'Inter',system-ui,sans-serif;
   min-height:100vh;
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
 }
 
-/* ── BACKGROUND GLOW ── */
-.bg-glow{
+/* ─────────────────────────────────────────
+   ANIMATED SKY BACKGROUND
+───────────────────────────────────────── */
+#sky{
   position:fixed;inset:0;z-index:-1;pointer-events:none;
+  overflow:hidden;
+}
+#sky::before{
+  content:'';position:absolute;inset:-40%;
   background:
-    radial-gradient(ellipse 80% 55% at 15% 35%,rgba(58,160,224,0.09) 0%,transparent 55%),
-    radial-gradient(ellipse 55% 65% at 88% 12%,rgba(240,160,0,0.07) 0%,transparent 50%),
-    radial-gradient(ellipse 60% 55% at 55% 88%,rgba(224,69,69,0.06) 0%,transparent 50%);
-  animation:breathe 12s ease-in-out infinite alternate;
+    radial-gradient(ellipse 70% 50% at 20% 30%,rgba(14,165,233,.10) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 55% at 85% 15%,rgba(245,158,11,.08) 0%,transparent 50%),
+    radial-gradient(ellipse 55% 60% at 50% 85%,rgba(239,68,68,.06) 0%,transparent 50%),
+    radial-gradient(ellipse 40% 40% at 70% 55%,rgba(99,102,241,.05) 0%,transparent 45%);
+  animation:skyMove 18s ease-in-out infinite alternate;
 }
-@keyframes breathe{0%{opacity:.65;transform:scale(1)}100%{opacity:1;transform:scale(1.07)}}
+@keyframes skyMove{
+  0%{transform:translate(0,0) scale(1);opacity:.7}
+  33%{transform:translate(-2%,1%) scale(1.03);opacity:.9}
+  66%{transform:translate(1%,-1%) scale(1.06);opacity:.85}
+  100%{transform:translate(-1%,2%) scale(1.04);opacity:1}
+}
 
-/* ── HEADER ── */
-header{
-  background:rgba(7,13,26,.75);
-  backdrop-filter:blur(28px);
-  -webkit-backdrop-filter:blur(28px);
-  border-bottom:1px solid var(--border);
-  padding:18px 20px 14px;
-  position:sticky;top:0;z-index:100;
+/* ─────────────────────────────────────────
+   HEADER
+───────────────────────────────────────── */
+#hdr{
+  position:sticky;top:0;z-index:200;
+  background:rgba(4,8,15,.8);
+  backdrop-filter:blur(32px);
+  -webkit-backdrop-filter:blur(32px);
+  border-bottom:1px solid var(--b0);
+  padding:16px 20px 12px;
 }
-.hdr{max-width:780px;margin:0 auto}
-.hdr-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-.hdr-icon{
-  font-size:40px;line-height:1;
-  filter:drop-shadow(0 0 22px rgba(100,180,255,.45));
-  animation:float 5s ease-in-out infinite;
+.hdr-inner{max-width:900px;margin:0 auto}
+.hdr-row1{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.hdr-ico{
+  font-size:36px;line-height:1;
+  filter:drop-shadow(0 0 18px rgba(56,189,248,.6));
+  animation:hoverFloat 4s ease-in-out infinite;
 }
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-h1{
-  font-size:23px;font-weight:900;letter-spacing:-.6px;
-  background:linear-gradient(130deg,#dde8f2 20%,#7ab5d8 100%);
+@keyframes hoverFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.hdr-text h1{
+  font-family:'Sora',sans-serif;
+  font-size:20px;font-weight:800;letter-spacing:-.4px;
+  background:linear-gradient(120deg,#e4f0ff 30%,#7ec8e8);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.hdr-sub{font-size:12px;color:var(--muted);margin-top:3px}
-.yr-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.yr-btn{
-  padding:6px 18px;border-radius:99px;
-  border:1.5px solid rgba(255,255,255,0.1);
-  background:rgba(255,255,255,0.04);
-  color:var(--muted);font-weight:800;font-size:13px;
-  font-family:inherit;cursor:pointer;transition:all .2s;
+.hdr-text p{font-size:11px;color:var(--t2);margin-top:2px;letter-spacing:.04em}
+.yr-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.yp{
+  padding:5px 16px;border-radius:99px;
+  border:1.5px solid var(--b1);background:var(--b0);
+  color:var(--t2);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  cursor:pointer;transition:all .22s;letter-spacing:-.2px;
 }
-.yr-btn:hover{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.07)}
-.yr-btn.y24{border-color:var(--c24);background:rgba(240,160,0,.11);color:var(--c24);box-shadow:0 0 18px rgba(240,160,0,.22),inset 0 0 18px rgba(240,160,0,.04)}
-.yr-btn.y25{border-color:var(--c25);background:rgba(224,69,69,.11);color:var(--c25);box-shadow:0 0 18px rgba(224,69,69,.22),inset 0 0 18px rgba(224,69,69,.04)}
-.yr-btn.y26{border-color:var(--c26);background:rgba(58,160,224,.11);color:var(--c26);box-shadow:0 0 18px rgba(58,160,224,.22),inset 0 0 18px rgba(58,160,224,.04)}
-.pnote{font-size:10px;color:var(--dim)}
+.yp:hover{background:var(--b1);border-color:var(--b2)}
+.yp.a24{border-color:var(--c24);background:rgba(245,158,11,.12);color:var(--c24);
+  box-shadow:0 0 20px rgba(245,158,11,.25),0 0 0 0 rgba(245,158,11,.15)}
+.yp.a25{border-color:var(--c25);background:rgba(239,68,68,.12);color:var(--c25);
+  box-shadow:0 0 20px rgba(239,68,68,.25)}
+.yp.a26{border-color:var(--c26);background:rgba(14,165,233,.12);color:var(--c26);
+  box-shadow:0 0 20px rgba(14,165,233,.25)}
+.yn{font-size:10px;color:var(--t3);letter-spacing:.03em}
 
-/* ── TABS ── */
-.tabs{background:rgba(7,13,26,.5);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
-.tabs-inner{max-width:780px;margin:0 auto;display:flex}
-.tab-btn{
-  flex:1;padding:11px 4px;border:none;border-bottom:2px solid transparent;
-  background:transparent;color:var(--muted);cursor:pointer;
-  font-size:10px;font-weight:700;font-family:inherit;
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  transition:all .2s;letter-spacing:.03em;
+/* ─────────────────────────────────────────
+   TAB BAR
+───────────────────────────────────────── */
+#tabbar{
+  background:rgba(7,16,30,.7);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--b0);
 }
-.tab-btn.active{color:var(--text);border-bottom-color:var(--c26);background:rgba(58,160,224,.05)}
-.tab-btn:hover:not(.active){color:rgba(220,235,248,.7)}
-.tbi{font-size:19px}
+.tb-inner{max-width:900px;margin:0 auto;display:flex}
+.tb{
+  flex:1;padding:12px 4px;border:none;background:transparent;
+  border-bottom:2px solid transparent;
+  color:var(--t2);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:all .2s;letter-spacing:.02em;text-transform:uppercase;
+}
+.tb.on{color:var(--tx);border-bottom-color:var(--c26)}
+.tb:hover:not(.on){color:rgba(228,240,255,.6)}
+.tb-i{font-size:18px}
 
-/* ── CONTENT ── */
-.wrap{padding:20px 16px;max-width:780px;margin:0 auto}
+/* ─────────────────────────────────────────
+   LAYOUT
+───────────────────────────────────────── */
+#wrap{padding:24px 16px 40px;max-width:900px;margin:0 auto}
 .sec{display:none}
-.sec.on{display:block;animation:fadeUp .3s ease-out}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.sec.on{display:block;animation:fadeUp .32s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── GLASS CARD ── */
+/* ─────────────────────────────────────────
+   CARDS
+───────────────────────────────────────── */
 .card{
-  background:var(--glass);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:20px;margin-bottom:14px;
-  box-shadow:0 8px 32px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);
+  background:var(--s1);
+  border:1px solid var(--b0);
+  border-radius:var(--r);
+  padding:22px 24px;
+  margin-bottom:16px;
+  box-shadow:0 4px 24px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);
   transition:box-shadow .25s,border-color .25s;
 }
-.card:hover{box-shadow:0 14px 44px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);border-color:var(--border-hi)}
-.clabel{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
-
-/* ── HEATMAP ── */
-.hm-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-.hm-yr{font-size:11px;font-weight:800;width:34px;flex-shrink:0}
-.hm-cells{display:flex;gap:3px;flex:1}
-.hm-c{
-  flex:1;height:40px;border-radius:8px;cursor:default;
-  position:relative;transition:transform .15s,box-shadow .15s;
+.card:hover{border-color:var(--b1);box-shadow:0 8px 36px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
+.clabel{
+  font-size:9px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t2);margin-bottom:20px;display:flex;align-items:center;gap:8px;
 }
-.hm-c:hover{transform:scaleY(1.3);z-index:2}
+.clabel::before{content:'';display:block;width:20px;height:1px;background:currentColor;opacity:.4}
+
+/* ─────────────────────────────────────────
+   HERO STATS (always shown)
+───────────────────────────────────────── */
+.hero-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  margin-bottom:16px;
+}
+.hs{
+  background:var(--s1);border:1px solid var(--b0);border-radius:var(--r);
+  padding:20px 18px;text-align:center;
+  box-shadow:0 4px 24px rgba(0,0,0,.35);
+  transition:transform .2s,box-shadow .2s;
+}
+.hs:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.hs-top{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t2);margin-bottom:10px}
+.hs-val{
+  font-family:'Sora',sans-serif;font-size:clamp(30px,6vw,48px);font-weight:800;
+  letter-spacing:-2px;line-height:1;margin-bottom:6px;
+}
+.hs-sub{font-size:10px;color:var(--t2);line-height:1.4}
+
+/* ─────────────────────────────────────────
+   HEATMAP
+───────────────────────────────────────── */
+.hm-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hm-yr{
+  font-family:'Sora',sans-serif;font-size:12px;font-weight:700;
+  width:36px;flex-shrink:0;letter-spacing:-.3px;
+}
+.hm-track{display:flex;gap:3px;flex:1}
+.hm-c{
+  flex:1;height:46px;border-radius:8px;
+  cursor:default;position:relative;
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.hm-c:hover{transform:scaleY(1.35);z-index:5}
 .hm-c::after{
-  content:attr(data-tip);
-  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
-  background:rgba(5,12,28,.96);color:#dde8f2;
-  padding:5px 10px;border-radius:8px;
-  font-size:11px;font-weight:600;white-space:nowrap;
-  border:1px solid rgba(255,255,255,.13);
-  box-shadow:0 4px 16px rgba(0,0,0,.5);
-  opacity:0;pointer-events:none;transition:opacity .15s;z-index:20;
+  content:attr(data-t);
+  position:absolute;bottom:calc(100%+9px);left:50%;
+  transform:translateX(-50%);
+  background:rgba(4,8,15,.98);color:#e4f0ff;
+  padding:5px 11px;border-radius:9px;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  white-space:nowrap;pointer-events:none;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+  opacity:0;transition:opacity .15s;z-index:50;
 }
 .hm-c:hover::after{opacity:1}
-.hm-months{display:flex;padding-left:42px;gap:3px;margin-top:6px}
-.hm-ml{flex:1;text-align:center;font-size:8px;color:var(--dim);font-weight:600}
-.hm-leg{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
-.hm-li{display:flex;align-items:center;gap:4px}
-.hm-ld{width:10px;height:10px;border-radius:3px}
-.hm-ll{font-size:9px;color:var(--muted)}
+.hm-mlabels{display:flex;padding-left:44px;gap:3px;margin-top:5px}
+.hml{flex:1;text-align:center;font-size:8px;color:var(--t3);font-weight:600;letter-spacing:.04em}
+.hm-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.hml-i{display:flex;align-items:center;gap:5px}
+.hml-dot{width:11px;height:11px;border-radius:4px}
+.hml-txt{font-size:9px;color:var(--t2);font-weight:600}
 
-/* ── YEAR SUMMARY CARDS ── */
-.yr-grid{display:grid;grid-template-columns:1fr;gap:12px}
-@media(min-width:580px){.yr-grid{grid-template-columns:repeat(3,1fr)}}
-.ycard{
+/* ─────────────────────────────────────────
+   YEAR SUMMARY CARDS (Aperçu tab)
+───────────────────────────────────────── */
+.yr-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:600px){.yr-grid{grid-template-columns:repeat(3,1fr)}}
+.yc{
   border-radius:var(--r);overflow:hidden;
-  border:1px solid var(--border);background:var(--glass);
-  backdrop-filter:blur(16px);
-  box-shadow:0 8px 32px rgba(0,0,0,.25);
-  transition:transform .2s,box-shadow .2s;
+  background:var(--s1);border:1px solid var(--b0);
+  box-shadow:0 4px 24px rgba(0,0,0,.35);
+  transition:transform .22s,box-shadow .22s;
 }
-.ycard:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,.38)}
-.yc-top{padding:18px 18px 14px}
-.yc-name{font-size:30px;font-weight:900;letter-spacing:-1.5px;line-height:1;margin-bottom:12px}
-.yc-temps{display:flex;gap:20px}
-.yc-t{display:flex;flex-direction:column}
-.yc-tv{font-size:24px;font-weight:800;letter-spacing:-.8px;line-height:1}
-.yc-tl{font-size:10px;color:var(--muted);font-weight:500;margin-top:3px}
-.yc-body{padding:0 18px 16px}
-.hl{display:flex;gap:8px;font-size:12px;color:rgba(175,198,220,.7);margin-bottom:5px;line-height:1.45}
-.hl-dot{color:var(--dim);flex-shrink:0;margin-top:2px}
-.badge{display:inline-block;font-size:9px;color:var(--muted);background:rgba(255,255,255,.06);padding:2px 7px;border-radius:99px;font-weight:600;border:1px solid rgba(255,255,255,.1)}
+.yc:hover{transform:translateY(-5px);box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.yc-accent{height:3px;width:100%}
+.yc-body{padding:18px 18px 16px}
+.yc-yr{
+  font-family:'Sora',sans-serif;font-size:32px;font-weight:800;
+  letter-spacing:-1.5px;line-height:1;margin-bottom:14px;
+}
+.yc-temps{display:flex;gap:18px;margin-bottom:14px}
+.yc-t{display:flex;flex-direction:column;gap:2px}
+.yc-v{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1}
+.yc-l{font-size:9px;color:var(--t2);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.yc-divider{height:1px;background:var(--b0);margin-bottom:12px}
+.yc-hl{font-size:12px;color:rgba(180,205,228,.65);line-height:1.5;margin-bottom:4px;
+  display:flex;gap:6px;align-items:flex-start}
+.yc-hl::before{content:'›';color:var(--t3);flex-shrink:0;margin-top:1px}
 
-/* ── MODE SWITCHER ── */
-.modesw{display:flex;gap:4px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:14px;padding:4px;margin-bottom:14px}
-.modebtn{flex:1;padding:9px 4px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
-.modebtn.on{background:rgba(255,255,255,.08);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.25)}
+/* ─────────────────────────────────────────
+   MODE SWITCHER
+───────────────────────────────────────── */
+.msw{
+  display:inline-flex;gap:3px;background:var(--s2);
+  border:1px solid var(--b0);border-radius:12px;padding:4px;
+  margin-bottom:16px;
+}
+.mb{
+  padding:8px 16px;border-radius:9px;border:none;
+  background:transparent;color:var(--t2);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .18s;
+}
+.mb.on{background:var(--s1);color:var(--tx);box-shadow:0 2px 8px rgba(0,0,0,.3)}
 
-/* ── TABLE ── */
-.dt{width:100%;border-collapse:collapse;font-size:12px}
-.dt th{text-align:center;padding:0 0 10px;font-weight:700;color:var(--muted)}
-.dt th:first-child{text-align:left;font-weight:600}
-.dt td{text-align:center;padding:8px 0;font-weight:700;border-top:1px solid rgba(255,255,255,.04)}
-.dt td:first-child{text-align:left;color:var(--muted);font-weight:400}
+/* ─────────────────────────────────────────
+   TABLE
+───────────────────────────────────────── */
+.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{
+  text-align:center;padding:0 0 12px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+}
+.dt th:first-child{text-align:left;color:var(--t2);font-weight:600}
+.dt td{
+  text-align:center;padding:9px 0;font-weight:600;
+  border-top:1px solid rgba(255,255,255,.04);
+}
+.dt td:first-child{text-align:left;color:var(--t2);font-weight:400;font-size:12px}
 
-/* ── CONDITIONS ── */
-.cg{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+/* ─────────────────────────────────────────
+   CONDITIONS
+───────────────────────────────────────── */
+.cg{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
 @media(min-width:480px){.cg{grid-template-columns:repeat(3,1fr)}}
-.cc{background:var(--glass);border:1px solid var(--border);border-radius:var(--r);padding:16px;backdrop-filter:blur(12px)}
-.cc-yr{font-weight:900;font-size:17px;margin-bottom:13px}
-.ccr{margin-bottom:10px}
-.cch{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
-.cchl{color:var(--muted)}
-.cctrack{background:rgba(255,255,255,.05);border-radius:99px;height:5px;overflow:hidden}
-.ccfill{height:5px;border-radius:99px;transition:width .9s cubic-bezier(.4,0,.2,1)}
-
-/* ── RECORDS ── */
-.absg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.absc{
-  background:var(--glass);border:1px solid var(--border);border-radius:var(--r);
-  padding:26px 16px;text-align:center;backdrop-filter:blur(12px);
-  transition:transform .2s,box-shadow .2s;
+.cc{
+  background:var(--s1);border:1px solid var(--b0);border-radius:var(--r);
+  padding:18px;box-shadow:0 4px 24px rgba(0,0,0,.35);
+  transition:transform .2s;
 }
-.absc:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,0,0,.35)}
-.absico{font-size:38px;margin-bottom:10px;line-height:1}
-.absv{font-size:42px;font-weight:900;letter-spacing:-2.5px;line-height:1;margin-bottom:8px}
-.abss{font-size:11px;color:var(--muted);line-height:1.5}
-.amp{background:rgba(255,255,255,.03);border-radius:12px;padding:13px 16px;font-size:13px;color:var(--muted);text-align:center;border:1px solid var(--border)}
-.amp strong{color:var(--text);font-size:18px}
+.cc:hover{transform:translateY(-3px)}
+.cc-yr{font-family:'Sora',sans-serif;font-weight:800;font-size:18px;margin-bottom:14px;letter-spacing:-.5px}
+.ccrow{margin-bottom:11px}
+.cchd{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px}
+.cch-ic{color:var(--t2)}
+.cch-v{font-weight:700;font-size:14px}
+.cct{background:rgba(255,255,255,.04);border-radius:99px;height:5px;overflow:hidden}
+.ccf{height:5px;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* ─────────────────────────────────────────
+   RECORDS — BIG STYLE
+───────────────────────────────────────── */
+.rec-hero{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  margin-bottom:16px;
+}
+.rh{
+  background:var(--s1);border:1px solid var(--b0);border-radius:var(--r);
+  padding:28px 20px;text-align:center;
+  box-shadow:0 4px 24px rgba(0,0,0,.35);
+  transition:transform .22s,box-shadow .22s;position:relative;overflow:hidden;
+}
+.rh:hover{transform:translateY(-4px);box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.rh::before{
+  content:'';position:absolute;inset:0;opacity:.06;
+  background:radial-gradient(circle at 50% 0%,currentColor,transparent 70%);
+}
+.rh-ico{font-size:40px;margin-bottom:12px;display:block}
+.rh-v{
+  font-family:'Sora',sans-serif;
+  font-size:clamp(52px,12vw,76px);
+  font-weight:800;letter-spacing:-4px;line-height:1;
+  margin-bottom:10px;
+}
+.rh-sub{font-size:12px;color:var(--t2);line-height:1.5}
+.amp-card{
+  background:var(--s1);border:1px solid var(--b0);border-radius:var(--r);
+  padding:18px 22px;display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;box-shadow:0 4px 24px rgba(0,0,0,.3);
+}
+.amp-label{font-size:11px;color:var(--t2);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.amp-val{
+  font-family:'Sora',sans-serif;font-size:32px;font-weight:800;
+  letter-spacing:-1.5px;
+  background:linear-gradient(90deg,#38bdf8,#818cf8,#f87171);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.yr-rec{background:var(--s1);border:1px solid var(--b0);border-radius:var(--r);padding:22px 24px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,.35)}
+.yr-rec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.05)}
+.yr-rec-name{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px}
+.badge{display:inline-block;font-size:9px;font-weight:700;color:var(--t2);background:var(--b0);padding:3px 9px;border-radius:99px;border:1px solid var(--b1);letter-spacing:.06em}
 
 .ri{
-  display:flex;align-items:center;gap:12px;
-  background:rgba(255,255,255,.025);border-radius:13px;
-  padding:12px 15px;margin-bottom:8px;
-  border:1px solid rgba(255,255,255,.05);transition:background .2s;
+  display:flex;align-items:center;gap:14px;
+  background:var(--s0);border-radius:12px;padding:13px 16px;
+  margin-bottom:8px;border:1px solid rgba(255,255,255,.04);
+  transition:background .2s,border-color .2s;
 }
-.ri:hover{background:rgba(255,255,255,.05)}
-.ri-ico{font-size:20px;width:28px;text-align:center;flex-shrink:0}
-.ri-info{flex:1}
+.ri:hover{background:var(--s2);border-color:var(--b1)}
+.ri-ico{font-size:22px;width:30px;text-align:center;flex-shrink:0}
 .ri-lbl{font-size:13px;font-weight:600}
-.ri-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.ri-t{font-size:19px;font-weight:900;flex-shrink:0;letter-spacing:-.5px}
+.ri-sub{font-size:11px;color:var(--t2);margin-top:2px}
+.ri-t{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;flex-shrink:0;letter-spacing:-.5px}
 
-.mom{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.moments-list{display:flex;flex-direction:column;gap:0}
+.mom{display:flex;align-items:flex-start;gap:14px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.04)}
 .mom:last-child{border-bottom:none;padding-bottom:0}
-.mom-ico{font-size:20px;flex-shrink:0;margin-top:1px}
-.mom-lbl{font-size:13px;font-weight:600}
-.mom-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
+.mom-ico{font-size:22px;flex-shrink:0;margin-top:1px}
+.mom-lbl{font-size:13px;font-weight:600;margin-bottom:3px}
+.mom-sub{font-size:11px;color:var(--t2);line-height:1.5}
 
-.yr-rec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.06)}
-.yr-rec-name{font-weight:900;font-size:21px}
+/* ─────────────────────────────────────────
+   CHART WRAPPER
+───────────────────────────────────────── */
+.chart-wrap{position:relative;width:100%}
 
-footer{text-align:center;padding:24px 16px;color:var(--dim);font-size:11px;border-top:1px solid rgba(255,255,255,.04);margin-top:4px}
+/* ─────────────────────────────────────────
+   FOOTER
+───────────────────────────────────────── */
+footer{
+  text-align:center;padding:28px 16px;
+  font-size:11px;color:var(--t3);
+  border-top:1px solid rgba(255,255,255,.04);
+  margin-top:8px;letter-spacing:.04em;
+}
 
-canvas{display:block;max-width:100%}
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media(max-width:480px){
+  .hero-stats{grid-template-columns:1fr}
+  .hs{padding:16px 14px}
+  .rec-hero{grid-template-columns:1fr}
+  .rh-v{font-size:52px}
+}
+@media(min-width:600px){
+  .hero-stats{grid-template-columns:repeat(3,1fr)}
+  #hdr{padding:18px 28px 14px}
+  #wrap{padding:28px 24px 48px}
+}
 </style>
 </head>
 <body>
-<div class="bg-glow"></div>
+<div id="sky"></div>
 
-<header>
-  <div class="hdr">
-    <div class="hdr-top">
-      <div class="hdr-icon">🌦️</div>
-      <div>
+<!-- ── HEADER ── -->
+<header id="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-row1">
+      <span class="hdr-ico">🌦️</span>
+      <div class="hdr-text">
         <h1>Journal Météo</h1>
-        <p class="hdr-sub">Domont &amp; voyages · 2024 → 2026</p>
+        <p>Domont &amp; voyages &nbsp;·&nbsp; 2024 → 2026</p>
       </div>
     </div>
-    <div class="yr-filters">
-      <button class="yr-btn y24" data-y="2024" onclick="toggleYear(2024)">2024</button>
-      <button class="yr-btn y25" data-y="2025" onclick="toggleYear(2025)">2025</button>
-      <button class="yr-btn y26" data-y="2026" onclick="toggleYear(2026)">2026 *</button>
-      <span class="pnote">* données janv.–juin</span>
+    <div class="yr-pills">
+      <button class="yp a24" data-y="2024" onclick="toggleY(2024)">2024</button>
+      <button class="yp a25" data-y="2025" onclick="toggleY(2025)">2025</button>
+      <button class="yp a26" data-y="2026" onclick="toggleY(2026)">2026 *</button>
+      <span class="yn">* données janv.–juin</span>
     </div>
   </div>
 </header>
 
-<div class="tabs">
-  <div class="tabs-inner">
-    <button class="tab-btn active" onclick="goTab('ap',this)"><span class="tbi">🗓️</span>Aperçu</button>
-    <button class="tab-btn" onclick="goTab('tp',this)"><span class="tbi">🌡️</span>Températures</button>
-    <button class="tab-btn" onclick="goTab('co',this)"><span class="tbi">🌤️</span>Conditions</button>
-    <button class="tab-btn" onclick="goTab('re',this)"><span class="tbi">🏆</span>Records</button>
+<!-- ── TABS ── -->
+<div id="tabbar">
+  <div class="tb-inner">
+    <button class="tb on" onclick="goTab('ap',this)"><span class="tb-i">🗓️</span>Aperçu</button>
+    <button class="tb" onclick="goTab('tp',this)"><span class="tb-i">🌡️</span>Températures</button>
+    <button class="tb" onclick="goTab('co',this)"><span class="tb-i">🌤️</span>Conditions</button>
+    <button class="tb" onclick="goTab('re',this)"><span class="tb-i">🏆</span>Records</button>
   </div>
 </div>
 
-<div class="wrap">
+<div id="wrap">
 
-  <div id="ap" class="sec on">
-    <div class="card">
-      <div class="clabel">🌡 Carte thermique · températures après-midi</div>
-      <div id="HM"></div>
-      <div class="hm-months" id="HM_ML"></div>
-      <div class="hm-leg" id="HM_LEG"></div>
-    </div>
-    <div id="YR_CARDS" class="yr-grid"></div>
-  </div>
+<!-- ════ APERÇU ════ -->
+<div id="ap" class="sec on">
 
-  <div id="tp" class="sec">
-    <div class="modesw">
-      <button class="modebtn on" onclick="setMode('aprem',this)">☀️ Après-midi</button>
-      <button class="modebtn" onclick="setMode('matin',this)">🌅 Matin</button>
-      <button class="modebtn" onclick="setMode('max',this)">🔥 Maximum</button>
+  <!-- Hero stats row -->
+  <div class="hero-stats">
+    <div class="hs">
+      <div class="hs-top">Record absolu froid</div>
+      <div class="hs-val" style="color:#38bdf8">−8°C</div>
+      <div class="hs-sub">Ressenti · 7 janv. 2026</div>
     </div>
-    <div class="card">
-      <div class="clabel" id="CTITLE">Températures · Après-midi</div>
-      <canvas id="TC" height="260"></canvas>
+    <div class="hs">
+      <div class="hs-top">Amplitude 3 ans</div>
+      <div class="hs-val" style="background:linear-gradient(120deg,#38bdf8,#818cf8,#f87171);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">48°C</div>
+      <div class="hs-sub">Du gel à la canicule</div>
     </div>
-    <div class="card">
-      <div class="clabel">Tableau comparatif</div>
-      <div id="TTABLE"></div>
+    <div class="hs">
+      <div class="hs-top">Record absolu chaud</div>
+      <div class="hs-val" style="color:#f87171">40°C</div>
+      <div class="hs-sub">1er juillet 2025</div>
     </div>
   </div>
 
-  <div id="co" class="sec">
-    <div class="cg" id="CC"></div>
-    <div class="card">
-      <div class="clabel">☀️ Ensoleillement estimé par mois (%)</div>
-      <canvas id="SC" height="210"></canvas>
-    </div>
-    <div class="card">
-      <div class="clabel">🌧️ Pluviosité estimée par mois (%)</div>
-      <canvas id="RC" height="210"></canvas>
-    </div>
-    <div class="card" style="padding:16px 20px">
-      <div class="clabel" style="margin-bottom:6px">ℹ️ Note</div>
-      <p style="font-size:12px;color:var(--muted);line-height:1.65">Pourcentages estimés à partir des notes journalières (mentions ☀️ 🌧️ ❄️ ☁️). Les températures sont des moyennes des relevés disponibles, non des données officielles de stations météo.</p>
-    </div>
+  <!-- Heatmap -->
+  <div class="card">
+    <div class="clabel">Carte thermique · températures après-midi</div>
+    <div id="HM"></div>
+    <div class="hm-mlabels" id="HML"></div>
+    <div class="hm-legend" id="HMLEG"></div>
   </div>
 
-  <div id="re" class="sec">
-    <div class="card">
-      <div class="clabel">🏆 Records absolus · 2024–2026</div>
-      <div class="absg">
-        <div class="absc">
-          <div class="absico">🥶</div>
-          <div class="absv" style="color:#5bbaf5">−8°C</div>
-          <div class="abss">Ressenti<br>7 janv. 2026</div>
-        </div>
-        <div class="absc">
-          <div class="absico">🔥</div>
-          <div class="absv" style="color:#f56b6b">40°C</div>
-          <div class="abss">1er juillet 2025<br>Canicule historique</div>
-        </div>
-      </div>
-      <div class="amp">Amplitude totale observée : <strong>48°C</strong> sur 3 ans</div>
-    </div>
-    <div id="YR_REC"></div>
-    <div class="card">
-      <div class="clabel">📅 Moments marquants</div>
-      <div id="MOMENTS"></div>
-    </div>
-  </div>
-
+  <!-- Year cards -->
+  <div class="yr-grid" id="YRC"></div>
 </div>
 
-<footer>Journal météo personnel · Domont (Val-d'Oise) · 2024–2026 · relevés quotidiens</footer>
+<!-- ════ TEMPÉRATURES ════ -->
+<div id="tp" class="sec">
+  <div class="msw">
+    <button class="mb on" onclick="setM('aprem',this)">☀️ Après-midi</button>
+    <button class="mb" onclick="setM('matin',this)">🌅 Matin</button>
+    <button class="mb" onclick="setM('max',this)">🔥 Maximum</button>
+  </div>
+  <div class="card">
+    <div class="clabel" id="CTITLE">Températures · Après-midi</div>
+    <div class="chart-wrap"><canvas id="TC" height="280"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="clabel">Comparatif mensuel</div>
+    <div id="TBL"></div>
+  </div>
+</div>
+
+<!-- ════ CONDITIONS ════ -->
+<div id="co" class="sec">
+  <div class="cg" id="CG"></div>
+  <div class="card">
+    <div class="clabel">Ensoleillement estimé · par mois (%)</div>
+    <div class="chart-wrap"><canvas id="SC" height="220"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="clabel">Pluviosité estimée · par mois (%)</div>
+    <div class="chart-wrap"><canvas id="RC" height="220"></canvas></div>
+  </div>
+</div>
+
+<!-- ════ RECORDS ════ -->
+<div id="re" class="sec">
+  <div class="rec-hero">
+    <div class="rh" style="color:#38bdf8">
+      <span class="rh-ico">🥶</span>
+      <div class="rh-v" style="color:#38bdf8">−8°C</div>
+      <div class="rh-sub">Ressenti froid extrême<br><strong>7 janv. 2026</strong></div>
+    </div>
+    <div class="rh" style="color:#f87171">
+      <span class="rh-ico">🔥</span>
+      <div class="rh-v" style="color:#f87171">40°C</div>
+      <div class="rh-sub">Canicule historique<br><strong>1er juillet 2025</strong></div>
+    </div>
+  </div>
+  <div class="amp-card">
+    <div>
+      <div class="amp-label">Amplitude totale observée</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:3px">Sur les 3 années cumulées</div>
+    </div>
+    <div class="amp-val">48°C</div>
+  </div>
+  <div id="YR_REC"></div>
+  <div class="card">
+    <div class="clabel">Moments marquants</div>
+    <div class="moments-list" id="MOM"></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<footer>Journal météo personnel &nbsp;·&nbsp; Domont (Val-d'Oise) &nbsp;·&nbsp; 2024–2026 &nbsp;·&nbsp; relevés quotidiens personnels</footer>
 
 <script>
-// ════════════ DATA ════════════
+// ════════════════════════════════
+//  DATA
+// ════════════════════════════════
 const M=['Jan','Fév','Mar','Avr','Mai','Jun','Juil','Août','Sep','Oct','Nov','Déc'];
-const YC={2024:'#f0a000',2025:'#e04545',2026:'#3aa0e0'};
+const YC={2024:'#f59e0b',2025:'#ef4444',2026:'#0ea5e9'};
 
 const D={
   2024:{
-    matin: [2,5,5,9,13,12,17,18,13,10,7,4],
-    aprem: [9,13,15,20,22,23,26,29,21,17,11,9],
-    min:   [-4.5,1,0,2.5,10,9,13,11,7,5,-1,0.5],
-    max:   [14,19,20,27,28,30,30,37,30,24,17,15],
-    sun:   [15,28,35,55,45,60,60,65,50,35,20,10],
-    rain:  [50,42,40,25,35,25,25,20,35,40,45,40],
-    snow:  [25,5,0,0,0,0,0,0,0,0,10,5],
+    matin:[2,5,5,9,13,12,17,18,13,10,7,4],
+    aprem:[9,13,15,20,22,23,26,29,21,17,11,9],
+    min:[-4.5,1,0,2.5,10,9,13,11,7,5,-1,0.5],
+    max:[14,19,20,27,28,30,30,37,30,24,17,15],
+    sun:[15,28,35,55,45,60,60,65,50,35,20,10],
+    rain:[50,42,40,25,35,25,25,20,35,40,45,40],
+    snow:[25,5,0,0,0,0,0,0,0,0,10,5],
     gmin:-9,gmax:37,
-    hl:['Vague de froid janvier — ressenti −9°C','Neige 30 cm · 21 novembre','Canicule Paris — 37°C en août','Été indien septembre (30°C parfait !)'],
-    rec:[['❄️','Janv. 16','Vague de froid',-4.5,'Ressenti −9°C'],['❄️','Nov. 21','Chute de neige',-1,'30 cm !'],['🔥','Août','Canicule Paris',37,''],['☀️','Sept. 1','Été indien',30,'Parfait !']],
+    hl:['Vague de froid janvier — ressenti −9°C','Chute de neige 30 cm · 21 novembre','Canicule parisienne · 37°C en août','Été indien septembre (30°C, parfait !)'],
+    rec:[['❄️','Janv. 16','Vague de froid',-4.5,'Ressenti −9°C'],['❄️','Nov. 21','Neige 30 cm',-1,''],['🔥','Août','Canicule Paris',37,''],['☀️','Sept. 1','Été indien',30,'Parfait !']],
   },
   2025:{
-    matin: [1,3,4,10,12,15,19,18,14,10,4,3],
-    aprem: [6,14,14,20,22,27,31,28,22,18,9,8],
-    min:   [-4,-3,0,4,8,11,12,13,9,5,-1.5,-3],
-    max:   [11,19,20,28,30,38,40,37,29,25,18,15],
-    sun:   [20,35,40,50,50,65,70,65,55,40,15,10],
-    rain:  [45,35,35,30,30,20,15,20,30,35,50,45],
-    snow:  [10,0,0,0,0,0,0,0,0,0,8,5],
+    matin:[1,3,4,10,12,15,19,18,14,10,4,3],
+    aprem:[6,14,14,20,22,27,31,28,22,18,9,8],
+    min:[-4,-3,0,4,8,11,12,13,9,5,-1.5,-3],
+    max:[11,19,20,28,30,38,40,37,29,25,18,15],
+    sun:[20,35,40,50,50,65,70,65,55,40,15,10],
+    rain:[45,35,35,30,30,20,15,20,30,35,50,45],
+    snow:[10,0,0,0,0,0,0,0,0,0,8,5],
     gmin:-4,gmax:40,
-    hl:['Canicule historique juin–juillet — 40°C !','Tornade à Eaubonne (20 octobre)','Hiver relativement doux (−4°C min)','Été très chaud de juin à août'],
-    rec:[['🔥','Juil. 1','Record absolu',40,'40°C !'],['🔥','Juin 30','Canicule',38,'Extrême'],['❄️','Janv. 14','Grand froid',-4,'Matin'],['🌪️','Oct. 20','Tornade',null,'Eaubonne']],
+    hl:['Canicule historique juin–juillet — 40°C !','Tornade à Eaubonne · 20 octobre','Hiver relativement doux (min −4°C)','Été extrêmement chaud juin–août'],
+    rec:[['🔥','Juil. 1','Record absolu de chaleur',40,'40°C !'],['🔥','Juin 30','Canicule',38,'Extrême'],['❄️','Janv. 14','Grand froid',-4,'Matin'],['🌪️','Oct. 20','Tornade',null,'Eaubonne']],
   },
   2026:{
-    matin: [0,5,8,8,12,13,null,null,null,null,null,null],
-    aprem: [7,13,15,21,24,20,null,null,null,null,null,null],
-    min:   [-8,-7,3,1.5,3,10,null,null,null,null,null,null],
-    max:   [12,20,18,27,34,25,null,null,null,null,null,null],
-    sun:   [20,30,50,60,55,40,null,null,null,null,null,null],
-    rain:  [40,35,25,20,30,35,null,null,null,null,null,null],
-    snow:  [30,5,0,0,0,0,null,null,null,null,null,null],
+    matin:[0,5,8,8,12,13,null,null,null,null,null,null],
+    aprem:[7,13,15,21,24,20,null,null,null,null,null,null],
+    min:[-8,-7,3,1.5,3,10,null,null,null,null,null,null],
+    max:[12,20,18,27,34,25,null,null,null,null,null,null],
+    sun:[20,30,50,60,55,40,null,null,null,null,null,null],
+    rain:[40,35,25,20,30,35,null,null,null,null,null,null],
+    snow:[30,5,0,0,0,0,null,null,null,null,null,null],
     gmin:-8,gmax:34,partial:true,
-    hl:['Hiver froid — ressenti −8°C le 7 janvier','"Semaine parfaite" mars 2–5 (18°C ☀️)','Vacances Pornic / Givrand — jusqu\'à 27°C','Canicule précoce fin mai (34°C dès le 24)'],
-    rec:[['❄️','Janv. 7','Grand froid (ressenti)',-8,''],['❄️','Févr. 14','Gel (ressenti)',-7,''],['☀️','Avr. 9','Vacances Pornic',27,'Givrand ☀️'],['🔥','Mai 24','Canicule précoce',34,'!']],
+    hl:['Hiver froid — ressenti −8°C le 7 janvier','"Semaine parfaite" mars 2–5 (18°C ☀️)','Vacances Pornic/Givrand — jusqu\'à 27°C','Canicule précoce dès le 24 mai (34°C)'],
+    rec:[['❄️','Janv. 7','Grand froid ressenti',-8,''],['❄️','Févr. 14','Gel ressenti',-7,''],['☀️','Avr. 9','Vacances Pornic',27,'Givrand ☀️'],['🔥','Mai 24','Canicule précoce',34,'!']],
   },
 };
 
 const MOMENTS=[
-  ['🏖️','Vacances Pornic 2026','21–29 avr. · jusqu\'à 27°C · Givrand / Saint-Père'],
-  ['🔥','Canicule historique 2025','Juin–Juil · pic 40°C le 1er juillet'],
-  ['❄️','Semaine glaciale 2024','Janv. 14–19 · verglas · −4.5°C (ressenti −9°C)'],
-  ['🌸','"Semaine parfaite" mars 2026','2–5 mars · 17–18°C soleil continu'],
-  ['🌨️','Neige 30 cm novembre 2024','21 nov. · première grande chute depuis longtemps'],
-  ['🔥','Canicule précoce 2026','22–30 mai · jusqu\'à 34°C'],
-  ['🚢','Voyage Amiens / Cayeux 2024','10–11 mai · 24–27°C, superbe'],
-  ['🌪️','Tornade Eaubonne','20 oct. 2025'],
+  ['🏖️','Vacances Pornic / Givrand 2026','21–29 avr. · jusqu\'à 27°C · baignade, soleil'],
+  ['🔥','Canicule historique 2025','Juin–Juil · pic 40°C le 1er juillet — exceptionnel'],
+  ['❄️','Semaine glaciale 2024','Janv. 14–19 · verglas, voitures gelées, −4.5°C (−9 ressenti)'],
+  ['🌸','"Semaine parfaite" mars 2026','2–5 mars · 17–18°C, soleil continu, jardinage 🌿'],
+  ['🌨️','Neige 30 cm novembre 2024','21 nov. · première grande chute depuis des années'],
+  ['🔥','Canicule précoce mai 2026','22–30 mai · jusqu\'à 34°C, inhabituel pour la saison'],
+  ['🚢','Voyage Amiens / Cayeux 2024','10–11 mai · 24–27°C, beau grand soleil'],
+  ['🌪️','Tornade à Eaubonne','20 oct. 2025 · événement météo rare en région parisienne'],
 ];
 
-// ════════════ STATE ════════════
+// ════════════════════════════════
+//  STATE
+// ════════════════════════════════
 let SY=[2024,2025,2026], mode='aprem';
-const charts={};
+const CH={};
 
-// ════════════ UTILS ════════════
+// ════════════════════════════════
+//  TEMP → COLOR
+// ════════════════════════════════
 const tc=t=>{
-  if(t==null)return'#070d1a';
-  if(t<-3)return'#1a4ad8';if(t<2)return'#2563eb';
-  if(t<7)return'#0891c2';if(t<12)return'#0d9488';
+  if(t==null)return'#04080f';
+  if(t<-3)return'#1a45c8';if(t<2)return'#2563eb';
+  if(t<7)return'#0891b2';if(t<12)return'#0d9488';
   if(t<17)return'#16a34a';if(t<22)return'#84cc16';
   if(t<27)return'#eab308';if(t<32)return'#f97316';
   return'#ef4444';
 };
-const avg=arr=>Math.round(arr.filter(v=>v!=null).reduce((s,v)=>s+v,0)/arr.filter(v=>v!=null).length);
+const avg=a=>Math.round(a.filter(v=>v!=null).reduce((s,v)=>s+v,0)/a.filter(v=>v!=null).length);
 
-// ════════════ HEATMAP ════════════
+// ════════════════════════════════
+//  HEATMAP
+// ════════════════════════════════
 function renderHM(){
   const el=document.getElementById('HM');
   let h='';
   [2024,2025,2026].forEach(y=>{
     if(!SY.includes(y))return;
-    h+=`<div class="hm-row"><div class="hm-yr" style="color:${YC[y]}">${y}</div><div class="hm-cells">`;
+    h+=`<div class="hm-row"><div class="hm-yr" style="color:${YC[y]}">${y}</div><div class="hm-track">`;
     M.forEach((m,i)=>{
       const t=D[y].aprem[i];
-      const bg=tc(t),op=t!=null?1:.08;
-      const glow=t!=null&&t>=28?`box-shadow:0 0 10px ${tc(t)}55;`:''
-      h+=`<div class="hm-c" data-tip="${m} ${y} : ${t!=null?t+'°C':'—'}" style="background:${bg};opacity:${op};${glow}"></div>`;
+      const col=tc(t),op=t!=null?1:.07;
+      const glow=t!=null&&t>=28?`box-shadow:0 0 12px ${tc(t)}55;`:'';
+      const hot=t!=null&&t>=32?`animation:pulse 2s ease-in-out infinite;`:'';
+      h+=`<div class="hm-c" data-t="${m} ${y} : ${t!=null?t+'°C':'—'}" style="background:${col};opacity:${op};${glow}${hot}"></div>`;
     });
     h+=`</div></div>`;
   });
   el.innerHTML=h;
-  document.getElementById('HM_ML').innerHTML=M.map(m=>`<div class="hm-ml">${m[0]}</div>`).join('');
-  document.getElementById('HM_LEG').innerHTML=
-    [['#2563eb','< 2°'],['#0891c2','2–7°'],['#0d9488','7–12°'],['#16a34a','12–17°'],['#eab308','17–27°'],['#f97316','27–32°'],['#ef4444','> 32°']]
-    .map(([c,l])=>`<div class="hm-li"><div class="hm-ld" style="background:${c}"></div><div class="hm-ll">${l}</div></div>`).join('');
+  document.getElementById('HML').innerHTML=M.map(m=>`<div class="hml">${m.slice(0,1)}</div>`).join('');
+  document.getElementById('HMLEG').innerHTML=
+    [['#2563eb','< 2°'],['#0891b2','2–7°'],['#0d9488','7–12°'],['#16a34a','12–17°'],['#eab308','17–27°'],['#f97316','27–32°'],['#ef4444','> 32°']]
+    .map(([c,l])=>`<div class="hml-i"><div class="hml-dot" style="background:${c}"></div><span class="hml-txt">${l}</span></div>`).join('');
 }
 
-// ════════════ YEAR CARDS ════════════
+// ════════════════════════════════
+//  YEAR CARDS
+// ════════════════════════════════
 function renderYC(){
-  document.getElementById('YR_CARDS').innerHTML=[2024,2025,2026]
-    .filter(y=>SY.includes(y)).map(y=>{
+  document.getElementById('YRC').innerHTML=
+    [2024,2025,2026].filter(y=>SY.includes(y)).map(y=>{
       const d=D[y],c=YC[y];
-      const tint=c+'22',tint2=c+'11';
-      return`<div class="ycard" style="background:linear-gradient(160deg,${tint} 0%,var(--glass) 40%)">
-        <div class="yc-top">
-          <div class="yc-name" style="color:${c}">${y}${d.partial?'<span class="badge" style="font-size:9px;margin-left:8px;vertical-align:middle">Janv.–Juin</span>':''}</div>
-          <div class="yc-temps">
-            <div class="yc-t"><div class="yc-tv" style="color:#5bbaf5">${d.gmin}°</div><div class="yc-tl">minimum</div></div>
-            <div class="yc-t"><div class="yc-tv" style="color:#f56b6b">${d.gmax}°</div><div class="yc-tl">maximum</div></div>
+      return`<div class="yc">
+        <div class="yc-accent" style="background:linear-gradient(90deg,${c},${c}44)"></div>
+        <div class="yc-body">
+          <div class="yc-yr" style="color:${c}">${y}
+            ${d.partial?`<span class="badge" style="vertical-align:middle;margin-left:8px;font-size:9px">Janv.–Juin</span>`:''}
           </div>
+          <div class="yc-temps">
+            <div class="yc-t">
+              <div class="yc-v" style="color:#38bdf8">${d.gmin}°</div>
+              <div class="yc-l">minimum</div>
+            </div>
+            <div class="yc-t">
+              <div class="yc-v" style="color:#f87171">${d.gmax}°</div>
+              <div class="yc-l">maximum</div>
+            </div>
+          </div>
+          <div class="yc-divider"></div>
+          ${d.hl.map(h=>`<div class="yc-hl">${h}</div>`).join('')}
         </div>
-        <div class="yc-body">${d.hl.map(h=>`<div class="hl"><span class="hl-dot">›</span>${h}</div>`).join('')}</div>
       </div>`;
     }).join('');
 }
 
-// ════════════ CHART DEFAULTS ════════════
+// ════════════════════════════════
+//  CHART DEFAULTS
+// ════════════════════════════════
 Chart.defaults.font.family="'Inter',system-ui,sans-serif";
 
-function baseOpts(yUnit='°C'){
+function cOpts(yUnit='°C',yMin=-14,yMax=44){
   return{
     responsive:true,
-    animation:{duration:500,easing:'easeInOutCubic'},
+    animation:{duration:600,easing:'easeInOutCubic'},
     plugins:{
-      legend:{labels:{color:'#607a94',font:{size:11,weight:'600'},boxWidth:12,padding:16}},
+      legend:{labels:{color:'#527494',font:{size:11,weight:'600'},boxWidth:10,padding:20}},
       tooltip:{
-        backgroundColor:'rgba(5,12,28,.96)',
-        borderColor:'rgba(255,255,255,.12)',borderWidth:1,
-        titleColor:'#607a94',bodyColor:'#dde8f2',
-        padding:10,cornerRadius:10,
+        backgroundColor:'rgba(4,8,15,.96)',
+        borderColor:'rgba(255,255,255,.14)',borderWidth:1,
+        titleColor:'#527494',bodyColor:'#e4f0ff',
+        padding:12,cornerRadius:12,displayColors:true,
         callbacks:{label:c=>` ${c.dataset.label} : ${c.raw!=null?c.raw+yUnit:'—'}`},
       },
     },
     scales:{
-      x:{ticks:{color:'#607a94',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
-      y:{ticks:{color:'#607a94',font:{size:10},callback:v=>v+yUnit},grid:{color:'rgba(255,255,255,.05)'}},
+      x:{ticks:{color:'#527494',font:{size:10,weight:'500'}},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{
+        min:yMin,max:yMax,
+        ticks:{color:'#527494',font:{size:10},callback:v=>v+yUnit},
+        grid:{color:'rgba(255,255,255,.04)'},
+      },
     },
   };
 }
 
-// ════════════ TEMP CHART ════════════
+// ════════════════════════════════
+//  TEMP CHART
+// ════════════════════════════════
 function renderTC(){
-  const canvas=document.getElementById('TC');
-  const ctx=canvas.getContext('2d');
-  if(charts.tc)charts.tc.destroy();
+  const cv=document.getElementById('TC');
+  const ctx=cv.getContext('2d');
+  if(CH.tc)CH.tc.destroy();
 
+  const h=cv.clientHeight||280;
   const datasets=SY.map(y=>{
     const c=YC[y];
-    // gradient fill
-    const grad=ctx.createLinearGradient(0,0,0,260);
-    grad.addColorStop(0,c+'45');grad.addColorStop(.7,c+'08');grad.addColorStop(1,'transparent');
+    const g=ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,c+'55');g.addColorStop(.65,c+'0d');g.addColorStop(1,'transparent');
     return{
       label:`${y}`,data:D[y][mode],
-      borderColor:c,backgroundColor:grad,fill:true,
-      tension:.42,borderWidth:2.5,
-      pointRadius:3.5,pointBackgroundColor:c,pointBorderColor:'transparent',
-      pointHoverRadius:6,spanGaps:false,
+      borderColor:c,backgroundColor:g,fill:true,
+      tension:.42,borderWidth:3,
+      pointRadius:4,pointBackgroundColor:c,pointBorderWidth:2,pointBorderColor:'rgba(4,8,15,.8)',
+      pointHoverRadius:7,pointHoverBorderWidth:2,
+      spanGaps:false,
     };
   });
 
-  const opts=baseOpts();
-  opts.scales.y.min=-14;opts.scales.y.max=44;
-  charts.tc=new Chart(ctx,{type:'line',data:{labels:M,datasets},options:opts});
-  document.getElementById('CTITLE').textContent={aprem:'Températures · Après-midi',matin:'Températures · Matin',max:'Températures · Maximum'}[mode];
+  const lbl={aprem:'Températures · Après-midi',matin:'Températures · Matin',max:'Températures · Maximum'};
+  CH.tc=new Chart(ctx,{type:'line',data:{labels:M,datasets},options:cOpts()});
+  document.getElementById('CTITLE').textContent=lbl[mode];
 }
 
-function renderTT(){
+function renderTBL(){
   let h=`<table class="dt"><thead><tr><th>Mois</th>`;
   SY.forEach(y=>h+=`<th style="color:${YC[y]}">${y}</th>`);
   h+=`</tr></thead><tbody>`;
   M.forEach((m,i)=>{
     h+=`<tr><td>${m}</td>`;
-    SY.forEach(y=>{const v=D[y][mode][i];h+=`<td style="color:${v!=null?tc(v):'#1a3658'}">${v!=null?v+'°':'–'}</td>`;});
+    SY.forEach(y=>{
+      const v=D[y][mode][i];
+      h+=`<td style="color:${v!=null?tc(v):'#1a3550'}">${v!=null?v+'°':'–'}</td>`;
+    });
     h+=`</tr>`;
   });
-  h+=`</tbody></table>`;
-  document.getElementById('TTABLE').innerHTML=h;
+  document.getElementById('TBL').innerHTML=h+'</tbody></table>';
 }
 
-// ════════════ CONDITIONS ════════════
-function renderCC(){
-  const el=document.getElementById('CC');
+// ════════════════════════════════
+//  CONDITIONS
+// ════════════════════════════════
+function renderCG(){
+  const el=document.getElementById('CG');
   el.style.gridTemplateColumns=`repeat(${SY.length},1fr)`;
   el.innerHTML=SY.map(y=>{
     const d=D[y],c=YC[y];
     const su=avg(d.sun),ra=avg(d.rain),sn=avg(d.snow);
     return`<div class="cc">
       <div class="cc-yr" style="color:${c}">${y}</div>
-      ${[['☀️',su,'#f0c040'],[`🌧️`,ra,'#60a5fa'],['❄️',sn,'#c0d8f0']].map(([ic,v,col])=>`
-        <div class="ccr"><div class="cch"><span class="cchl">${ic} ${ic==='☀️'?'Soleil':ic==='🌧️'?'Pluie':'Neige'}</span><span style="color:${col};font-weight:700">${v}%</span></div>
-        <div class="cctrack"><div class="ccfill" style="background:${col};width:${Math.min(v,100)}%"></div></div></div>`).join('')}
+      ${[['☀️ Soleil',su,'#fbbf24'],['🌧️ Pluie',ra,'#60a5fa'],['❄️ Neige',sn,'#e0f0ff']].map(([lbl,v,col])=>`
+        <div class="ccrow">
+          <div class="cchd"><span class="cch-ic">${lbl}</span><span class="cch-v" style="color:${col}">${v}%</span></div>
+          <div class="cct"><div class="ccf" style="background:${col};width:${Math.min(v,100)}%"></div></div>
+        </div>`).join('')}
     </div>`;
   }).join('');
 }
 
-function renderBarChart(id,key,unit='%'){
+function renderBar(id,key){
   const ctx=document.getElementById(id).getContext('2d');
-  if(charts[id])charts[id].destroy();
-  const opts=baseOpts(unit);
-  opts.scales.y.min=0;opts.scales.y.max=100;
-  charts[id]=new Chart(ctx,{
+  if(CH[id])CH[id].destroy();
+  const opts=cOpts('%',0,100);
+  opts.scales.y.ticks.callback=v=>v+'%';
+  CH[id]=new Chart(ctx,{
     type:'bar',
-    data:{labels:M,datasets:SY.map(y=>({label:`${y}`,data:D[y][key],backgroundColor:YC[y]+'b8',borderRadius:4,borderSkipped:false}))},
+    data:{labels:M,datasets:SY.map(y=>({
+      label:`${y}`,data:D[y][key],
+      backgroundColor:YC[y]+'bb',borderRadius:5,borderSkipped:false,
+    }))},
     options:opts,
   });
 }
 
-// ════════════ RECORDS ════════════
+// ════════════════════════════════
+//  RECORDS
+// ════════════════════════════════
 function renderREC(){
   document.getElementById('YR_REC').innerHTML=[2024,2025,2026].map(y=>{
     const d=D[y],c=YC[y];
-    return`<div class="card">
+    return`<div class="yr-rec">
       <div class="yr-rec-hd">
         <span class="yr-rec-name" style="color:${c}">${y}</span>
         ${d.partial?`<span class="badge">Janv.–Juin</span>`:''}
       </div>
       ${d.rec.map(([ico,date,lbl,t,note])=>{
-        const col=t==null?'':t<0?'#5bbaf5':t>30?'#f56b6b':'#f0c040';
+        const col=t==null?'':t<0?'#38bdf8':t>30?'#f87171':'#fbbf24';
         return`<div class="ri">
           <span class="ri-ico">${ico}</span>
           <div class="ri-info"><div class="ri-lbl">${lbl}</div><div class="ri-sub">${date}${note?' · '+note:''}</div></div>
@@ -551,46 +768,50 @@ function renderREC(){
     </div>`;
   }).join('');
 
-  document.getElementById('MOMENTS').innerHTML=MOMENTS.map(([ico,lbl,det])=>`
+  document.getElementById('MOM').innerHTML=MOMENTS.map(([ico,lbl,det])=>`
     <div class="mom">
       <span class="mom-ico">${ico}</span>
       <div><div class="mom-lbl">${lbl}</div><div class="mom-sub">${det}</div></div>
     </div>`).join('');
 }
 
-// ════════════ INTERACTIONS ════════════
-function toggleYear(y){
-  if(SY.includes(y)){if(SY.length<=1)return;SY=SY.filter(x=>x!==y);}
+// ════════════════════════════════
+//  INTERACTIONS
+// ════════════════════════════════
+function toggleY(y){
+  if(SY.includes(y)){if(SY.length<=1)return;SY=SY.filter(x=>x!==y)}
   else SY=[...SY,y].sort((a,b)=>a-b);
-  const btn=document.querySelector(`[data-y="${y}"]`);
-  const cn={2024:'y24',2025:'y25',2026:'y26'}[y];
-  btn.className=SY.includes(y)?`yr-btn ${cn}`:'yr-btn';
+  const cls={2024:'a24',2025:'a25',2026:'a26'};
+  document.querySelector(`[data-y="${y}"]`).className=
+    SY.includes(y)?`yp ${cls[y]}`:'yp';
   renderAll();
 }
 
 function goTab(id,btn){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   document.getElementById(id).classList.add('on');
-  btn.classList.add('active');
+  btn.classList.add('on');
 }
 
-function setMode(m,btn){
+function setM(m,btn){
   mode=m;
-  document.querySelectorAll('.modebtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  renderTC();renderTT();
+  renderTC();renderTBL();
 }
 
 function renderAll(){
   renderHM();renderYC();
-  renderTC();renderTT();
-  renderCC();
-  renderBarChart('SC','sun');
-  renderBarChart('RC','rain');
+  renderTC();renderTBL();
+  renderCG();
+  renderBar('SC','sun');
+  renderBar('RC','rain');
 }
 
-// ════════════ INIT ════════════
+// ════════════════════════════════
+//  INIT
+// ════════════════════════════════
 renderAll();
 renderREC();
 </script>
