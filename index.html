@@ -3,38 +3,502 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon Météo</title>
+<title>Météo Jardin</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-    background: #000;
-    color: #fff;
-    min-height: 100vh;
-  }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  /* BACKGROUND GRADIENT selon saison */
-  .bg-winter { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%); }
-  .bg-spring { background: linear-gradient(180deg, #2d6a4f 0%, #40916c 40%, #74c69d 100%); }
-  .bg-summer { background: linear-gradient(180deg, #f77f00 0%, #d62828 20%, #457b9d 60%, #1d3557 100%); }
-  .bg-autumn { background: linear-gradient(180deg, #6d4c41 0%, #bf8040 40%, #e9c46a 100%); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  background: #1c1c1e;
+  color: white;
+  min-height: 100vh;
+}
 
-  .app {
-    max-width: 430px;
-    margin: 0 auto;
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
-  }
+.app {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a3a5c 0%, #0d2137 50%, #091520 100%);
+  position: relative;
+}
 
-  /* HEADER */
-  .header {
-    padding: 60px 24px 20px;
-    text-align: center;
-    position: relative;
-  }
+/* TOP HEADER */
+.header {
+  padding: 55px 20px 20px;
+  text-align: center;
+}
 
+.location {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+}
+
+.subtitle {
+  font-size: 14px;
+  opacity: 0.6;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* MONTH SELECTOR */
+.months-wrap {
+  overflow-x: auto;
+  padding: 16px 20px;
+  scrollbar-width: none;
+}
+.months-wrap::-webkit-scrollbar { display: none; }
+
+.months-row {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+}
+
+.month-btn {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  padding: 9px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.month-btn.active {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.3);
+  font-weight: 600;
+}
+
+/* SUMMARY CARD */
+.summary-card {
+  margin: 0 16px 20px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 20px;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.summary-stat .value {
+  font-size: 28px;
+  font-weight: 200;
+}
+
+.summary-stat .label {
+  font-size: 11px;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+}
+
+/* DAYS LIST */
+.days-list {
+  padding: 0 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.day-card {
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.09);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.day-card:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-1px);
+}
+
+.day-card.expanded {
+  flex-wrap: wrap;
+}
+
+.day-number {
+  font-size: 22px;
+  font-weight: 300;
+  width: 36px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.day-name {
+  font-size: 11px;
+  opacity: 0.5;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.day-icon {
+  font-size: 28px;
+  width: 36px;
+  text-align: center;
+}
+
+.day-info {
+  flex: 1;
+}
+
+.day-desc {
+  font-size: 15px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.day-note {
+  font-size: 12px;
+  opacity: 0.45;
+  margin-top: 3px;
+}
+
+.day-temps {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.temp-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.temp-pill .time-label {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.temp-pill .temp-val {
+  font-weight: 500;
+}
+
+.temp-cold { color: #90caf9; }
+.temp-warm { color: #ffb74d; }
+.temp-hot { color: #ff7043; }
+
+/* DETAIL PANEL */
+.detail-panel {
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: none;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.detail-panel.show { display: grid; }
+
+.detail-item {
+  text-align: center;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.detail-item .d-icon { font-size: 18px; }
+.detail-item .d-val { font-size: 14px; font-weight: 500; margin-top: 4px; }
+.detail-item .d-label { font-size: 10px; opacity: 0.45; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background: rgba(10,20,35,0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 12px 30px 28px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+  font-family: inherit;
+}
+
+.nav-btn.active { opacity: 1; }
+.nav-btn .nav-icon { font-size: 22px; }
+.nav-btn .nav-label { font-size: 10px; letter-spacing: 0.3px; }
+
+/* TEMP BAR */
+.temp-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.temp-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.temp-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #90caf9, #ffb74d);
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="location">🌿 Jardin</div>
+    <div class="subtitle">Mon suivi météo personnel</div>
+  </div>
+
+  <div class="months-wrap">
+    <div class="months-row" id="monthsRow"></div>
+  </div>
+
+  <div class="summary-card" id="summaryCard">
+    <div class="summary-stat">
+      <div class="value" id="sumMin">—</div>
+      <div class="label">Min</div>
+    </div>
+    <div class="summary-stat">
+      <div class="value" id="sumAvg">—</div>
+      <div class="label">Moyenne</div>
+    </div>
+    <div class="summary-stat">
+      <div class="value" id="sumMax">—</div>
+      <div class="label">Max</div>
+    </div>
+    <div class="summary-stat">
+      <div class="value" id="sumRain">—</div>
+      <div class="label">Pluies</div>
+    </div>
+  </div>
+
+  <div class="days-list" id="daysList"></div>
+
+  <div style="height: 80px;"></div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" onclick="setView('calendar')">
+    <span class="nav-icon">📅</span>
+    <span class="nav-label">Calendrier</span>
+  </button>
+  <button class="nav-btn" onclick="setView('graph')">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Graphique</span>
+  </button>
+  <button class="nav-btn" onclick="setView('notes')">
+    <span class="nav-icon">📝</span>
+    <span class="nav-label">Notes</span>
+  </button>
+</div>
+
+<script>
+const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+
+const data = {
+  "Janvier 2025": [
+    { day: 1, icon: "❄️", desc: "Froid", matin: { temp: 2, label: "Matin" }, apm: { temp: 6, label: "AM" } },
+    { day: 2, icon: "❄️", desc: "Gelée", matin: { temp: -1, label: "Matin" } },
+    { day: 3, icon: "🌥️", desc: "Couvert", matin: { temp: 4, label: "Matin" }, apm: { temp: 8, label: "AM" } },
+    { day: 4, icon: "🌧️", desc: "Pluie", matin: { temp: 5, label: "Matin" }, apm: { temp: 7, label: "AM" } },
+    { day: 5, icon: "🌤️", desc: "Éclaircie", matin: { temp: 3, label: "Matin" }, apm: { temp: 9, label: "AM" } },
+  ],
+  "Février 2025": [
+    { day: 1, icon: "🌧️", desc: "Pluie", matin: { temp: 6, label: "Matin" }, apm: { temp: 10, label: "AM" } },
+    { day: 2, icon: "🌤️", desc: "Variable", matin: { temp: 5, label: "Matin" } },
+    { day: 3, icon: "☀️", desc: "Soleil", matin: { temp: 7, label: "Matin" }, apm: { temp: 14, label: "AM" } },
+  ],
+  "Mars 2025": [
+    { day: 1, icon: "🌤️", desc: "Variable", matin: { temp: 9, label: "Matin" }, apm: { temp: 16, label: "AM" } },
+    { day: 2, icon: "🌧️", desc: "Pluie", matin: { temp: 10, label: "Matin" }, apm: { temp: 13, label: "AM" } },
+    { day: 3, icon: "☀️", desc: "Beau", matin: { temp: 11, label: "Matin" }, apm: { temp: 19, label: "AM" } },
+  ],
+  "Avril 2025": [
+    { day: 1, icon: "🌦️", desc: "Averses", matin: { temp: 12, label: "Matin" }, apm: { temp: 17, label: "AM" } },
+    { day: 2, icon: "🌤️", desc: "Variable", matin: { temp: 11, label: "Matin" }, apm: { temp: 18, label: "AM" } },
+    { day: 3, icon: "☀️", desc: "Soleil", matin: { temp: 13, label: "Matin" }, apm: { temp: 22, label: "AM" } },
+    { day: 4, icon: "⛈️", desc: "Orage", matin: { temp: 14, label: "Matin" }, apm: { temp: 16, label: "AM" } },
+  ],
+  "Mai 2025": [
+    { day: 1, icon: "☀️", desc: "Beau", matin: { temp: 15, label: "Matin" }, apm: { temp: 24, label: "AM" } },
+    { day: 2, icon: "🌤️", desc: "Variable", matin: { temp: 14, label: "Matin" }, apm: { temp: 22, label: "AM" } },
+    { day: 3, icon: "🌧️", desc: "Pluie", matin: { temp: 13, label: "Matin" }, apm: { temp: 18, label: "AM" } },
+    { day: 4, icon: "☀️", desc: "Soleil", matin: { temp: 16, label: "Matin" }, apm: { temp: 26, label: "AM" } },
+  ],
+  "Juin 2025": [
+    { day: 1, icon: "☀️", desc: "Chaud", matin: { temp: 18, label: "5h40" }, apm: { temp: 28, label: "AM" } },
+    { day: 2, icon: "💧", desc: "Humide", matin: { temp: 17, label: "5h40" }, apm: { temp: 17, label: "PM", note: "Pluie" } },
+    { day: 3, icon: "🌤️", desc: "Variable", matin: { temp: 16, label: "5h40" } },
+    { day: 4, icon: "🌤️", desc: "Variable", matin: { temp: 16, label: "5h40" } },
+    { day: 5, icon: "🌤️", desc: "Variable", matin: { temp: 14, label: "5h40" }, apm: { temp: 20, label: "PM" } },
+    { day: 6, icon: "☀️", desc: "Soleil", matin: { temp: 13, label: "Matin" }, apm: { temp: 25, label: "PM" } },
+    { day: 7, icon: "☀️", desc: "Très chaud", matin: { temp: 18, label: "Matin" }, apm: { temp: 28, label: "PM" } },
+    { day: 8, icon: "🌤️", desc: "Variable", matin: { temp: 17, label: "Matin" }, apm: { temp: 23, label: "PM" } },
+    { day: 9, icon: "🌤️", desc: "Variable", matin: { temp: 15, label: "5h40" } },
+    { day: 10, icon: "🌤️", desc: "Variable", matin: { temp: 11, label: "5h40" }, apm: { temp: 20, label: "PM", note: "Pluie" } },
+    { day: 11, icon: "🌤️", desc: "Variable", matin: { temp: 13, label: "5h40" } },
+    { day: 12, icon: "☀️", desc: "Soleil", matin: { temp: 12, label: "5h40" }, apm: { temp: 22, label: "PM" } },
+    { day: 13, icon: "🌥️", desc: "Nuageux", matin: { temp: 13, label: "6h40" }, apm: { temp: 19, label: "PM" } },
+    { day: 14, icon: "🌧️", desc: "Pluie", matin: { temp: 13, label: "Matin" }, apm: { temp: 19, label: "PM", note: "Pluie" } },
+    { day: 15, icon: "⛅️", desc: "Mitigé", matin: { temp: 14, label: "Matin" }, apm: { temp: 19, label: "PM", note: "Vent" } },
+    { day: 16, icon: "☁️", desc: "Nuageux", matin: { temp: 14, label: "Matin" } },
+    { day: 17, icon: "☀️", desc: "Soleil", matin: { temp: 14, label: "Matin" }, apm: { temp: 24, label: "PM" } },
+    { day: 18, icon: "☀️", desc: "Beau", matin: { temp: 15, label: "Matin" }, apm: { temp: 26, label: "PM" } },
+    { day: 19, icon: "☀️", desc: "Chaud", matin: { temp: 16, label: "Matin" }, apm: { temp: 29, label: "PM" } },
+    { day: 20, icon: "⛈️", desc: "Orage", matin: { temp: 18, label: "Matin" }, apm: { temp: 22, label: "PM", note: "Orage soir" } },
+    { day: 21, icon: "🌤️", desc: "Variable", matin: { temp: 15, label: "Matin" }, apm: { temp: 23, label: "PM" } },
+    { day: 22, icon: "☀️", desc: "Soleil", matin: { temp: 16, label: "Matin" }, apm: { temp: 27, label: "PM" } },
+    { day: 23, icon: "☀️", desc: "Très chaud", matin: { temp: 19, label: "Matin" }, apm: { temp: 32, label: "PM" } },
+    { day: 24, icon: "☀️", desc: "Chaud", matin: { temp: 20, label: "Matin" }, apm: { temp: 31, label: "PM" } },
+    { day: 25, icon: "🌤️", desc: "Variable", matin: { temp: 18, label: "Matin" }, apm: { temp: 26, label: "PM" } },
+    { day: 26, icon: "🌧️", desc: "Pluie", matin: { temp: 16, label: "Matin" }, apm: { temp: 19, label: "PM" } },
+    { day: 27, icon: "🌤️", desc: "Variable", matin: { temp: 15, label: "Matin" }, apm: { temp: 22, label: "PM" } },
+    { day: 28, icon: "☀️", desc: "Beau", matin: { temp: 16, label: "Matin" }, apm: { temp: 25, label: "PM" } },
+    { day: 29, icon: "☀️", desc: "Chaud", matin: { temp: 17, label: "Matin" }, apm: { temp: 27, label: "PM" } },
+    { day: 30, icon: "🌤️", desc: "Variable", matin: { temp: 16, label: "Matin" }, apm: { temp: 24, label: "PM" } },
+  ]
+};
+
+let currentMonth = "Juin 2025";
+
+function getTempClass(t) {
+  if (t <= 8) return 'temp-cold';
+  if (t <= 20) return '';
+  if (t <= 27) return 'temp-warm';
+  return 'temp-hot';
+}
+
+function getDayName(month, day) {
+  const months = {"Janvier":0,"Février":1,"Mars":2,"Avril":3,"Mai":4,"Juin":5,"Juillet":6,"Août":7,"Septembre":8,"Octobre":9,"Novembre":10,"Décembre":11};
+  const parts = month.split(' ');
+  const d = new Date(parseInt(parts[1]), months[parts[0]], day);
+  return DAYS_FR[d.getDay()];
+}
+
+function renderMonths() {
+  const row = document.getElementById('monthsRow');
+  row.innerHTML = '';
+  Object.keys(data).forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'month-btn' + (m === currentMonth ? ' active' : '');
+    btn.textContent = m;
+    btn.onclick = () => { currentMonth = m; renderMonths(); renderDays(); };
+    row.appendChild(btn);
+  });
+}
+
+function renderSummary(days) {
+  const allTemps = days.flatMap(d => [d.matin?.temp, d.apm?.temp].filter(t => t !== undefined));
+  const min = Math.min(...allTemps);
+  const max = Math.max(...allTemps);
+  const avg = Math.round(allTemps.reduce((a,b) => a+b, 0) / allTemps.length);
+  const rains = days.filter(d => d.icon === '🌧️' || d.icon === '🌦️' || (d.apm?.note && d.apm.note.includes('Pluie'))).length;
+  document.getElementById('sumMin').textContent = min + '°';
+  document.getElementById('sumMax').textContent = max + '°';
+  document.getElementById('sumAvg').textContent = avg + '°';
+  document.getElementById('sumRain').textContent = rains + 'j';
+}
+
+function renderDays() {
+  const days = data[currentMonth] || [];
+  renderSummary(days);
+  const list = document.getElementById('daysList');
+  list.innerHTML = '';
+
+  const allTemps = days.flatMap(d => [d.matin?.temp, d.apm?.temp].filter(t => t !== undefined));
+  const minT = Math.min(...allTemps);
+  const maxT = Math.max(...allTemps);
+
+  days.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'day-card';
+
+    const dayName = getDayName(currentMonth, d.day);
+    const mainTemp = d.apm ? d.apm.temp : d.matin.temp;
+    const barPct = maxT > minT ? Math.round(((mainTemp - minT) / (maxT - minT)) * 100) : 50;
+
+    let tempsHTML = '';
+    if (d.matin) {
+      tempsHTML += `<div class="temp-pill"><span class="time-label">${d.matin.label}</span><span class="temp-val ${getTempClass(d.matin.temp)}">${d.matin.temp}°</span></div>`;
+    }
+    if (d.apm) {
+      tempsHTML += `<div class="temp-pill"><span class="time-label">${d.apm.label}</span><span class="temp-val ${getTempClass(d.apm.temp)}">${d.apm.temp}°</span></div>`;
+    }
+
+    card.innerHTML = `
+      <div>
+        <div class="day-number">${d.day}</div>
+        <div class="day-name">${dayName}</div>
+      </div>
+      <div class="day-icon">${d.icon}</div>
+      <div class="day-info">
+        <div class="day-desc">${d.desc}</div>
+        ${d.apm?.note ? `<div class="day-note">${d.apm.note}</div>` : ''}
+        <div class="temp-bar-wrap" style="margin-top:8px;">
+          <div class="temp-bar"><div class="temp-bar-fill" style="width:${barPct}%"></div></div>
+        </div>
+      </div>
+      <div class="day-temps">${tempsHTML}</div>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+function setView(v) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+renderMonths();
+renderDays();
+</script>
+</body>
+</html>
   .city-name {
     font-size: 34px;
     font-weight: 300;
