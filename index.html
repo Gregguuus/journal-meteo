@@ -3,317 +3,606 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Météo Personnelle</title>
+<title>Mon Météo</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
   body {
-    font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(180deg, #1a3a5c 0%, #2d6a9f 40%, #1e4d7b 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: #000;
+    color: #fff;
     min-height: 100vh;
-    color: white;
   }
+
+  /* BACKGROUND GRADIENT selon saison */
+  .bg-winter { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%); }
+  .bg-spring { background: linear-gradient(180deg, #2d6a4f 0%, #40916c 40%, #74c69d 100%); }
+  .bg-summer { background: linear-gradient(180deg, #f77f00 0%, #d62828 20%, #457b9d 60%, #1d3557 100%); }
+  .bg-autumn { background: linear-gradient(180deg, #6d4c41 0%, #bf8040 40%, #e9c46a 100%); }
 
   .app {
-    max-width: 390px;
+    max-width: 430px;
     margin: 0 auto;
-    padding: 60px 20px 40px;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
   }
 
-  .city {
+  /* HEADER */
+  .header {
+    padding: 60px 24px 20px;
     text-align: center;
+    position: relative;
+  }
+
+  .city-name {
     font-size: 34px;
     font-weight: 300;
-    letter-spacing: 0.5px;
-  }
-
-  .subtitle {
-    text-align: center;
-    font-size: 14px;
-    opacity: 0.7;
-    margin-top: 4px;
-  }
-
-  .main-temp {
-    text-align: center;
-    font-size: 96px;
-    font-weight: 100;
-    line-height: 1;
-    margin: 10px 0 0;
-  }
-
-  .condition {
-    text-align: center;
-    font-size: 20px;
-    font-weight: 400;
+    letter-spacing: -0.5px;
     opacity: 0.9;
-    margin-top: 4px;
   }
 
-  .minmax {
-    text-align: center;
-    font-size: 18px;
-    opacity: 0.7;
-    margin-top: 6px;
-  }
-
-  .card {
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 16px;
+  .year-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
     margin-top: 16px;
   }
 
-  .card-title {
-    font-size: 11px;
+  .year-tab {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 15px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+    font-family: inherit;
+  }
+
+  .year-tab.active {
+    background: rgba(255,255,255,0.35);
     font-weight: 600;
-    letter-spacing: 1px;
+  }
+
+  /* MONTH SCROLL */
+  .month-scroll {
+    display: flex;
+    gap: 8px;
+    padding: 12px 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .month-scroll::-webkit-scrollbar { display: none; }
+
+  .month-btn {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: rgba(255,255,255,0.7);
+    padding: 6px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    backdrop-filter: blur(10px);
+  }
+
+  .month-btn.active {
+    background: rgba(255,255,255,0.3);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* MONTH SECTION */
+  .month-section { display: none; }
+  .month-section.visible { display: block; }
+
+  .month-title {
+    font-size: 13px;
+    font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 1px;
     opacity: 0.6;
-    margin-bottom: 12px;
+    padding: 8px 24px 4px;
+  }
+
+  /* CARDS CONTAINER */
+  .days-container {
+    padding: 0 16px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* DAY CARD */
+  .day-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .day-name {
+    font-size: 15px;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+
+  .day-number {
+    font-size: 13px;
+    opacity: 0.5;
+  }
+
+  /* TEMPS ROW */
+  .temps-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .temp-block {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
     display: flex;
     align-items: center;
     gap: 6px;
   }
 
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
+  .temp-block .icon { font-size: 16px; }
+
+  .temp-info { flex: 1; }
+
+  .temp-time {
+    font-size: 10px;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .data-table tr {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  .data-table tr:last-child {
-    border-bottom: none;
-  }
-
-  .data-table td {
-    padding: 10px 4px;
-    font-size: 15px;
-  }
-
-  .data-table td:first-child {
-    opacity: 0.8;
+  .temp-value {
+    font-size: 20px;
     font-weight: 300;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
   }
 
-  .data-table td:nth-child(2) {
-    text-align: center;
+  .temp-value span {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .temp-desc {
+    font-size: 10px;
     opacity: 0.6;
-    font-size: 13px;
+    margin-top: 2px;
+    line-height: 1.2;
   }
 
-  .data-table td:last-child {
-    text-align: right;
-    font-weight: 500;
-    font-size: 18px;
+  /* COLOR CODING */
+  .cold { color: #7ec8e3; }
+  .cool { color: #a8d8ea; }
+  .mild { color: #b8e0a4; }
+  .warm { color: #ffd166; }
+  .hot  { color: #ef8c5a; }
+  .very-hot { color: #e63946; }
+
+  /* NOTE CARD */
+  .note-card {
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    opacity: 0.7;
+    font-style: italic;
+    margin-top: 2px;
   }
 
-  .temp-cold { color: #7dd3fc; }
-  .temp-freeze { color: #bae6fd; }
-  .temp-mild { color: #86efac; }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 16px;
+  /* FOOTER NAV */
+  .footer-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 24px;
   }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s;
+  }
+
+  .nav-btn .nav-icon { font-size: 22px; }
+  .nav-btn.active { color: #fff; }
+
+  /* STATS VIEW */
+  .stats-view { display: none; padding: 20px 16px 100px; }
+  .stats-view.visible { display: block; }
 
   .stat-card {
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.1);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.15);
     padding: 16px;
-    text-align: center;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
   }
 
-  .stat-label {
+  .stat-title {
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
     text-transform: uppercase;
-    opacity: 0.6;
+    letter-spacing: 1px;
+    opacity: 0.5;
     margin-bottom: 8px;
   }
 
   .stat-value {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 200;
   }
 
-  .stat-unit {
-    font-size: 13px;
-    opacity: 0.7;
-  }
-
-  .bar-container {
-    margin-top: 8px;
-  }
-
-  .bar-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-
-  .bar-label {
+  .stat-sub {
     font-size: 12px;
-    opacity: 0.7;
-    width: 30px;
-    text-align: right;
+    opacity: 0.6;
+    margin-top: 2px;
   }
 
-  .bar-track {
-    flex: 1;
-    height: 4px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px;
-    overflow: hidden;
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
   }
 
-  .bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    background: linear-gradient(90deg, #7dd3fc, #38bdf8);
-  }
+  .main-view { display: block; }
+  .main-view.hidden { display: none; }
 
-  .bar-val {
-    font-size: 13px;
-    font-weight: 500;
-    width: 40px;
-  }
-
-  .note-card {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(20px);
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 16px;
-    margin-top: 16px;
-    font-size: 13px;
-    opacity: 0.7;
-    line-height: 1.6;
-    text-align: center;
-  }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <div class="city">Ma Météo</div>
-  <div class="subtitle">Décembre 2025 · Relevés personnels</div>
-  <div class="main-temp">3°</div>
-  <div class="condition">Froid · Matin</div>
-  <div class="minmax">Max 7° · Min 0,5°</div>
+<div class="app bg-winter" id="app">
 
-  <!-- Tableau des relevés -->
-  <div class="card">
-    <div class="card-title">🌡 Relevés du matin</div>
-    <table class="data-table">
-      <tr>
-        <td>10 déc.</td>
-        <td>5h40</td>
-        <td class="temp-cold">4,5°</td>
-      </tr>
-      <tr>
-        <td>11 déc.</td>
-        <td>5h40</td>
-        <td class="temp-cold">4,5°</td>
-      </tr>
-      <tr>
-        <td>12 déc.</td>
-        <td>5h40</td>
-        <td class="temp-cold">4,5°</td>
-      </tr>
-      <tr>
-        <td>13 déc.</td>
-        <td>5h40</td>
-        <td class="temp-freeze">2°</td>
-      </tr>
-      <tr>
-        <td>26 déc.</td>
-        <td>6h40</td>
-        <td class="temp-mild">7° 💧</td>
-      </tr>
-      <tr>
-        <td>27 déc.</td>
-        <td>5h40</td>
-        <td class="temp-freeze">0,5°</td>
-      </tr>
-    </table>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Moyenne</div>
-      <div class="stat-value">3,8<span class="stat-unit">°c</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Minimum</div>
-      <div class="stat-value">0,5<span class="stat-unit">°c</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Maximum</div>
-      <div class="stat-value">7<span class="stat-unit">°c</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Relevés</div>
-      <div class="stat-value">6</div>
+  <div class="header">
+    <div class="city-name">🌍 Mon Journal Météo</div>
+    <div class="year-tabs">
+      <button class="year-tab active" onclick="setYear(2025)">2025</button>
+      <button class="year-tab" onclick="setYear(2026)">2026</button>
     </div>
   </div>
 
-  <!-- Graphique barres -->
-  <div class="card">
-    <div class="card-title">📊 Visualisation</div>
-    <div class="bar-container">
-      <div class="bar-row">
-        <span class="bar-label">10</span>
-        <div class="bar-track"><div class="bar-fill" style="width:64%"></div></div>
-        <span class="bar-val">4,5°</span>
+  <div class="month-scroll" id="monthScroll"></div>
+
+  <!-- MAIN VIEW -->
+  <div class="main-view" id="mainView">
+    <div id="monthSections"></div>
+  </div>
+
+  <!-- STATS VIEW -->
+  <div class="stats-view" id="statsView">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">🔥 Record chaleur</div>
+        <div class="stat-value hot" id="statMax">--</div>
+        <div class="stat-sub" id="statMaxDate">--</div>
       </div>
-      <div class="bar-row">
-        <span class="bar-label">11</span>
-        <div class="bar-track"><div class="bar-fill" style="width:64%"></div></div>
-        <span class="bar-val">4,5°</span>
+      <div class="stat-card">
+        <div class="stat-title">🥶 Record froid</div>
+        <div class="stat-value cold" id="statMin">--</div>
+        <div class="stat-sub" id="statMinDate">--</div>
       </div>
-      <div class="bar-row">
-        <span class="bar-label">12</span>
-        <div class="bar-track"><div class="bar-fill" style="width:64%"></div></div>
-        <span class="bar-val">4,5°</span>
-      </div>
-      <div class="bar-row">
-        <span class="bar-label">13</span>
-        <div class="bar-track"><div class="bar-fill" style="width:29%"></div></div>
-        <span class="bar-val">2°</span>
-      </div>
-      <div class="bar-row">
-        <span class="bar-label">26</span>
-        <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
-        <span class="bar-val">7°</span>
-      </div>
-      <div class="bar-row">
-        <span class="bar-label">27</span>
-        <div class="bar-track"><div class="bar-fill" style="width:7%"></div></div>
-        <span class="bar-val">0,5°</span>
-      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">📊 Moyenne annuelle</div>
+      <div class="stat-value mild" id="statAvg">--</div>
+      <div class="stat-sub">Toutes mesures confondues</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">📅 Jours enregistrés</div>
+      <div class="stat-value" id="statDays">--</div>
+      <div class="stat-sub" id="statDaysSub">--</div>
     </div>
   </div>
 
-  <div class="note-card">
-    ❄️ Période froide · Relevés à l'aube<br>
-    26 déc. : très humide · nuit de Noël
+  <div class="footer-nav">
+    <button class="nav-btn active" id="navWeather" onclick="showView('weather')">
+      <span class="nav-icon">🌤️</span>
+      Météo
+    </button>
+    <button class="nav-btn" id="navStats" onclick="showView('stats')">
+      <span class="nav-icon">📊</span>
+      Stats
+    </button>
   </div>
 
 </div>
-</body>
-</html>
+
+<script>
+const weatherData = {
+  2025: {
+    janvier: [
+      { day: 1, matin: { temp: 11, desc: "soleil au réveil", icon: "☀️", time: "matin" }, note: "Challans" },
+      { day: 2, matin: { temp: 3.5, desc: "pluie et neige fondue", icon: "🌨️", time: "matin" } },
+      { day: 3, matin: { temp: -1, desc: "voiture gelée", icon: "🧊", time: "5h40" }, apm: { temp: null, desc: "soleil", icon: "☀️" } },
+      { day: 6, matin: { temp: 11, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 10, matin: { temp: 2, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 14, matin: { temp: -4, desc: "", icon: "🥶", time: "6h40" } },
+      { day: 15, matin: { temp: 2, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 16, matin: { temp: 3.5, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 17, matin: { temp: 1, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 18, matin: { temp: 0.5, desc: "", icon: "🌡️", time: "6h40" } },
+      { day: 21, matin: { temp: -2, desc: "", icon: "🥶", time: "5h40" } },
+      { day: 22, matin: { temp: 2.5, desc: "pluie", icon: "🌧️", time: "5h40" }, apm: { temp: 9, desc: "", icon: "🌡️" } },
+      { day: 23, matin: { temp: 4.5, desc: "sec", icon: "🌤️", time: "5h40" }, apm: { temp: 8.5, desc: "sec", icon: "🌤️" } },
+      { day: 24, matin: { temp: 7.5, desc: "sec, vent", icon: "💨", time: "5h40" } },
+      { day: 25, matin: { temp: 11, desc: "pluie", icon: "🌧️", time: "7h20" } },
+      { day: 28, matin: { temp: 7.5, desc: "sec, vent", icon: "💨", time: "5h40" }, apm: { temp: 11, desc: "averses", icon: "🌦️" } },
+      { day: 29, matin: { temp: 7.5, desc: "vent", icon: "💨", time: "5h40" }, apm: { temp: 7.5, desc: "pluie", icon: "🌧️" } },
+    ],
+    février: [
+      { day: 4, matin: { temp: null, desc: "froid, beau", icon: "❄️☀️", time: "matin" } },
+      { day: 5, matin: { temp: 4.5, desc: "humide", icon: "💧", time: "8h" } },
+      { day: 6, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" } },
+      { day: 10, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" }, apm: { temp: 5, desc: "pluie", icon: "🌧️" } },
+      { day: 11, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" }, apm: { temp: 5, desc: "humide", icon: "💧" } },
+      { day: 12, matin: { temp: 0.5, desc: "givre voiture", icon: "🧊", time: "5h40" } },
+      { day: 13, matin: { temp: 3.5, desc: "humide", icon: "💧", time: "5h40" } },
+      { day: 15, matin: { temp: -3, desc: "beau", icon: "☀️❄️", time: "9h" } },
+      { day: 16, matin: { temp: 4, desc: "beau", icon: "☀️", time: "9h" } },
+      { day: 17, matin: { temp: 4, desc: "Nantes", icon: "🌤️", time: "9h" }, apm: { temp: 15, desc: "beau Nantes", icon: "☀️" } },
+      { day: 18, matin: { temp: -1, desc: "gris Saint-Père", icon: "☁️", time: "10h" }, apm: { temp: 15, desc: "beau", icon: "☀️" } },
+      { day: 19, matin: { temp: 11, desc: "Saint-Père", icon: "🌤️", time: "10h" }, apm: { temp: 16, desc: "soleil Saumur", icon: "☀️" } },
+      { day: 20, matin: { temp: 12, desc: "Saumur beau", icon: "☀️", time: "11h" }, apm: { temp: 18, desc: "frais", icon: "🌤️" } },
+      { day: 21, matin: { temp: 13, desc: "Domont", icon: "⛅️", time: "11h" }, apm: { temp: 17, desc: "", icon: "☀️" } },
+      { day: 22, matin: { temp: 11, desc: "gris", icon: "☁️", time: "11h" }, apm: { temp: 15, desc: "soleil", icon: "☀️" } },
+      { day: 23, matin: { temp: 4, desc: "soleil", icon: "☀️", time: "8h" } },
+      { day: 24, matin: { temp: 10.5, desc: "neutre", icon: "🌤️", time: "5h40" } },
+      { day: 25, matin: { temp: null, desc: "pluie", icon: "🌧️", time: "matin" } },
+      { day: 26, matin: { temp: 5, desc: "humide", icon: "💧", time: "5h40" } },
+      { day: 27, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" } },
+      { day: 28, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" } },
+    ],
+    mars: [
+      { day: 1, matin: { temp: 2, desc: "beau soleil", icon: "☀️", time: "8h30" } },
+      { day: 2, matin: { temp: 2, desc: "beau soleil", icon: "☀️", time: "matin" } },
+      { day: 3, matin: { temp: 0, desc: "beau", icon: "☀️", time: "7h" } },
+      { day: 4, matin: { temp: 1, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 12, desc: "beau", icon: "☀️" } },
+      { day: 5, matin: { temp: 3, desc: "", icon: "🌤️", time: "9h" }, apm: { temp: 15, desc: "beau", icon: "☀️" } },
+      { day: 6, matin: { temp: 3, desc: "", icon: "🌤️", time: "9h" }, apm: { temp: 15, desc: "beau", icon: "☀️" } },
+      { day: 7, matin: { temp: 6.5, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 18, desc: "soleil", icon: "☀️" } },
+      { day: 8, matin: { temp: 3.5, desc: "", icon: "🌤️", time: "6h40" }, apm: { temp: 18, desc: "soleil", icon: "☀️" } },
+      { day: 9, matin: { temp: 14, desc: "beau", icon: "☀️", time: "11h" } },
+      { day: 10, matin: { temp: 10, desc: "pluie", icon: "🌧️", time: "9h" } },
+      { day: 11, matin: { temp: 4.5, desc: "brouillard", icon: "🌫️", time: "5h40" }, apm: { temp: null, desc: "gris", icon: "☁️" } },
+      { day: 12, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" }, apm: { temp: 8, desc: "humide", icon: "💧" } },
+      { day: 13, matin: { temp: 3, desc: "humide", icon: "💧", time: "5h40" }, apm: { temp: 8, desc: "humide soleil", icon: "🌦️" } },
+      { day: 14, matin: { temp: 1, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 8, desc: "", icon: "🌡️" } },
+      { day: 15, matin: { temp: 0, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 7, desc: "humide frais", icon: "💧" } },
+      { day: 16, matin: { temp: 0, desc: "", icon: "🌡️", time: "7h40" }, apm: { temp: 13, desc: "beau vent", icon: "💨☀️" } },
+      { day: 17, matin: { temp: 1, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 13, desc: "vent", icon: "💨☀️" } },
+      { day: 18, matin: { temp: 1, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 13, desc: "vent", icon: "💨" } },
+      { day: 19, matin: { temp: 4, desc: "", icon: "🌡️", time: "6h40" }, apm: { temp: 18, desc: "soleil", icon: "☀️" } },
+      { day: 20, matin: { temp: 4, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 20, desc: "soleil", icon: "☀️" } },
+      { day: 21, matin: { temp: 11, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: null, desc: "nuageux", icon: "☁️" } },
+      { day: 22, matin: { temp: 12, desc: "pluie", icon: "🌧️", time: "9h40" }, apm: { temp: 11, desc: "pluie", icon: "🌧️" } },
+      { day: 23, matin: { temp: 12, desc: "sans pluie", icon: "🌥️", time: "9h40" } },
+      { day: 24, matin: { temp: 14, desc: "", icon: "🌤️", time: "11h" }, apm: { temp: 17, desc: "mitigé", icon: "⛅️" } },
+      { day: 25, matin: { temp: 8, desc: "", icon: "🌤️", time: "5h40" } },
+      { day: 26, matin: { temp: 8, desc: "bruine", icon: "🌦️", time: "5h40" }, apm: { temp: 15, desc: "soleil", icon: "☀️" } },
+      { day: 27, matin: { temp: 4, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 28, matin: { temp: 5, desc: "brouillard", icon: "🌫️", time: "6h40" }, apm: { temp: 12, desc: "pluie", icon: "🌧️" } },
+      { day: 29, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "9h40" }, apm: { temp: 14, desc: "soleil", icon: "☀️" } },
+      { day: 30, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "9h40" } },
+      { day: 31, matin: { temp: 5, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 17, desc: "soleil", icon: "☀️" } },
+    ],
+    avril: [
+      { day: 1, matin: { temp: 6, desc: "soleil", icon: "☀️", time: "8h40" }, apm: { temp: 15, desc: "soleil", icon: "☀️" } },
+      { day: 2, matin: { temp: 6, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 17, desc: "soleil", icon: "☀️" } },
+      { day: 3, matin: { temp: 9, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 20, desc: "soleil", icon: "☀️" } },
+      { day: 4, matin: { temp: 12, desc: "", icon: "🌤️", time: "4h40" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 5, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "10h" }, apm: { temp: 27, desc: "soleil", icon: "☀️" } },
+      { day: 6, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "10h" }, apm: { temp: 18, desc: "soleil", icon: "☀️" } },
+      { day: 7, matin: { temp: 4, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 8, matin: { temp: 4, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 9, matin: { temp: 7, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 10, matin: { temp: 5, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 11, matin: { temp: 5, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 23, desc: "soleil", icon: "☀️" } },
+      { day: 12, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: null, desc: "pluie", icon: "🌧️" } },
+      { day: 13, matin: { temp: 18, desc: "soleil Bordeaux", icon: "☀️", time: "matin" } },
+      { day: 14, matin: { temp: 15, desc: "Bordeaux", icon: "🌤️", time: "matin" }, apm: { temp: 20, desc: "Saint-Émilion pluie soleil", icon: "🌦️" } },
+      { day: 15, matin: { temp: 10, desc: "Bordeaux nuageux", icon: "☁️", time: "matin" }, apm: { temp: null, desc: "pluie et soleil", icon: "🌦️" } },
+      { day: 16, matin: { temp: null, desc: "soleil Bordeaux", icon: "☀️", time: "matin" }, apm: { temp: 15, desc: "Givrand soleil", icon: "☀️" } },
+      { day: 17, matin: { temp: 12, desc: "pluie soleil Givrand", icon: "🌦️", time: "matin" }, apm: { temp: 18, desc: "soleil", icon: "☀️" } },
+      { day: 18, matin: { temp: 12, desc: "pluie Givrand", icon: "🌧️", time: "matin" }, apm: { temp: 16, desc: "mitigé", icon: "⛅️" } },
+      { day: 19, matin: { temp: 12, desc: "pluie Givrand", icon: "🌧️", time: "matin" } },
+      { day: 20, matin: { temp: 12, desc: "soleil un peu", icon: "🌤️", time: "matin" } },
+      { day: 21, matin: { temp: 12, desc: "Givrand", icon: "🌤️", time: "matin" } },
+      { day: 22, matin: { temp: 14, desc: "Domont gris", icon: "☁️", time: "matin" } },
+      { day: 23, matin: { temp: 12, desc: "gris Domont", icon: "☁️", time: "matin" } },
+      { day: 24, matin: { temp: 10, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 16, desc: "gris", icon: "☁️" } },
+      { day: 25, matin: { temp: 9, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 26, matin: { temp: 9, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 19, desc: "soleil nuage", icon: "⛅️" } },
+      { day: 27, matin: { temp: 12, desc: "nuageux", icon: "☁️", time: "matin" }, apm: { temp: 21, desc: "soleil", icon: "☀️" } },
+      { day: 28, matin: { temp: 13, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 29, matin: { temp: 13, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 30, matin: { temp: 20, desc: "", icon: "☀️", time: "11h" }, apm: { temp: 28, desc: "soleil", icon: "☀️" } },
+    ],
+    mai: [
+      { day: 1, matin: { temp: 20, desc: "", icon: "☀️", time: "matin" } },
+      { day: 2, matin: { temp: 20, desc: "soleil", icon: "☀️", time: "10h" } },
+      { day: 3, matin: { temp: 16, desc: "", icon: "🌤️", time: "6h40" }, apm: { temp: 18, desc: "pluie", icon: "🌧️" } },
+      { day: 4, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 15, desc: "soleil nuage", icon: "⛅️" } },
+      { day: 5, matin: { temp: 8, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: null, desc: "frais vent", icon: "💨" } },
+      { day: 6, matin: { temp: 8, desc: "frais", icon: "🌤️", time: "8h" }, apm: { temp: 16, desc: "frais vent soleil", icon: "💨☀️" } },
+      { day: 7, matin: { temp: 9.5, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 18, desc: "soleil", icon: "☀️" } },
+      { day: 8, matin: { temp: 9.5, desc: "soleil", icon: "☀️", time: "8h" } },
+      { day: 9, matin: { temp: 10.5, desc: "soleil", icon: "☀️", time: "8h" } },
+      { day: 10, matin: { temp: 15, desc: "soleil", icon: "☀️", time: "9h" }, apm: { temp: 23, desc: "soleil", icon: "☀️" } },
+      { day: 11, matin: { temp: 15, desc: "soleil", icon: "☀️", time: "9h" } },
+      { day: 12, matin: { temp: null, desc: "pluie", icon: "🌧️", time: "8h" }, apm: { temp: null, desc: "mitigé", icon: "⛅️" } },
+      { day: 13, matin: { temp: 11, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 20, desc: "orageux", icon: "⛈️" } },
+      { day: 14, matin: { temp: 12, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 15, matin: { temp: 9, desc: "soleil", icon: "☀️", time: "6h40" }, apm: { temp: 17, desc: "mitigé", icon: "⛅️" } },
+      { day: 16, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 20, desc: "mitigé", icon: "⛅️" } },
+      { day: 17, matin: { temp: 10, desc: "Parc Astérix", icon: "🎡", time: "7h40" }, apm: { temp: 20, desc: "Parc Astérix", icon: "🎡" } },
+      { day: 18, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "matin" }, apm: { temp: 20, desc: "soleil", icon: "☀️" } },
+      { day: 19, matin: { temp: 10, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 20, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "6h" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 21, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "6h" }, apm: { temp: 17, desc: "pluie", icon: "🌧️" } },
+      { day: 22, matin: { temp: 8, desc: "", icon: "🌡️", time: "5h40" }, apm: { temp: 20, desc: "soleil vent", icon: "💨☀️" } },
+      { day: 23, matin: { temp: 8, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 24, matin: { temp: 10, desc: "", icon: "🌤️", time: "6h40" }, apm: { temp: 21, desc: "soleil vent", icon: "💨☀️" } },
+      { day: 25, matin: { temp: 15, desc: "pluie", icon: "🌧️", time: "11h" } },
+      { day: 26, matin: { temp: 15, desc: "soleil", icon: "☀️", time: "matin" }, apm: { temp: 20, desc: "soleil nuage", icon: "⛅️" } },
+      { day: 27, matin: { temp: 15, desc: "nuageux", icon: "☁️", time: "7h40" } },
+      { day: 28, matin: { temp: 15, desc: "nuageux", icon: "☁️", time: "7h40" } },
+      { day: 29, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 30, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 30, desc: "soleil Compiègne", icon: "☀️" } },
+      { day: 31, matin: { temp: 27, desc: "nuageux pluie", icon: "🌦️", time: "12h" } },
+    ],
+    juin: [
+      { day: 1, matin: { temp: 14, desc: "nuageux", icon: "☁️", time: "9h" }, apm: { temp: 24, desc: "soleil nuages", icon: "⛅️" } },
+      { day: 2, matin: { temp: 15, desc: "", icon: "🌤️", time: "6h40" }, apm: { temp: 23, desc: "soleil nuage", icon: "⛅️" } },
+      { day: 3, matin: { temp: 10, desc: "", icon: "🌡️", time: "5h40" } },
+      { day: 4, matin: { temp: 15, desc: "pluie un peu", icon: "🌦️", time: "5h40" }, apm: { temp: 20, desc: "bof", icon: "⛅️" } },
+      { day: 5, matin: { temp: 16, desc: "pluie fine", icon: "🌧️", time: "9h" } },
+      { day: 6, matin: { temp: 16, desc: "pluie fine", icon: "🌧️", time: "9h" } },
+      { day: 7, matin: { temp: 16, desc: "pluie fine", icon: "🌧️", time: "9h" } },
+      { day: 8, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "10h" }, apm: { temp: 21, desc: "soleil", icon: "☀️" } },
+      { day: 9, matin: { temp: 13, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 10, matin: { temp: 13, desc: "soleil", icon: "☀️", time: "7h40" } },
+      { day: 11, matin: { temp: 13, desc: "soleil", icon: "☀️", time: "7h40" } },
+      { day: 12, matin: { temp: 23, desc: "soleil", icon: "☀️", time: "9h" }, apm: { temp: 27, desc: "soleil", icon: "☀️" } },
+      { day: 13, matin: { temp: 20, desc: "", icon: "☀️", time: "5h40" }, apm: { temp: 35, desc: "soleil", icon: "☀️" } },
+      { day: 14, matin: { temp: 26, desc: "soleil", icon: "☀️", time: "12h" }, apm: { temp: 26, desc: "soleil", icon: "☀️" } },
+      { day: 15, matin: { temp: 17, desc: "pluie", icon: "🌧️", time: "11h" }, apm: { temp: 27, desc: "", icon: "☀️" } },
+      { day: 16, matin: { temp: 11, desc: "soleil", icon: "☀️", time: "5h40" } },
+      { day: 17, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 30, desc: "soleil", icon: "☀️" } },
+      { day: 18, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 30, desc: "soleil", icon: "☀️" } },
+      { day: 19, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 32, desc: "soleil", icon: "☀️" } },
+      { day: 20, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 35, desc: "soleil", icon: "☀️" } },
+      { day: 21, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "5h40" } },
+      { day: 22, matin: { temp: 23, desc: "", icon: "☀️", time: "12h" }, apm: { temp: 30, desc: "", icon: "☀️" } },
+      { day: 23, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 24, matin: { temp: 15, desc: "soleil", icon: "☀️", time: "6h40" }, apm: { temp: 35, desc: "soleil", icon: "☀️" } },
+      { day: 25, matin: { temp: 23, desc: "averses", icon: "🌦️", time: "10h" }, apm: { temp: 35, desc: "soleil → orages", icon: "⛈️" } },
+      { day: 26, matin: { temp: 20, desc: "averses gris", icon: "🌦️", time: "9h" }, apm: { temp: 24, desc: "nuageux soleil", icon: "⛅️" } },
+      { day: 27, matin: { temp: 20, desc: "averses", icon: "🌦️", time: "9h" } },
+      { day: 28, matin: { temp: 20, desc: "soleil", icon: "☀️", time: "8h" }, apm: { temp: 35, desc: "soleil", icon: "☀️" } },
+      { day: 29, matin: { temp: 20, desc: "couvert", icon: "☁️", time: "8h" }, apm: { temp: 35, desc: "soleil", icon: "☀️" } },
+      { day: 30, matin: { temp: 24, desc: "soleil", icon: "☀️", time: "10h" }, apm: { temp: 38, desc: "soleil", icon: "☀️" } },
+    ],
+    juillet: [
+      { day: 1, matin: { temp: 28, desc: "soleil", icon: "☀️", time: "9h" }, apm: { temp: 40, desc: "soleil", icon: "🔥" } },
+      { day: 2, matin: { temp: 22, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 32, desc: "soleil", icon: "☀️" } },
+      { day: 3, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "10h" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 4, matin: { temp: 16, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 26, desc: "soleil", icon: "☀️" } },
+      { day: 5, matin: { temp: 14, desc: "", icon: "🌤️", time: "6h40" }, apm: { temp: 28, desc: "soleil", icon: "☀️" } },
+      { day: 6, matin: { temp: 16, desc: "pluie", icon: "🌧️", time: "10h" }, apm: { temp: 21, desc: "pluie", icon: "🌧️" } },
+      { day: 7, matin: { temp: 16, desc: "pluie", icon: "🌧️", time: "10h" } },
+      { day: 8, matin: { temp: 14, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 9, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 28, desc: "soleil", icon: "☀️" } },
+      { day: 10, matin: { temp: 14, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 30, desc: "soleil", icon: "☀️" } },
+      { day: 11, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "7h40" } },
+      { day: 12, matin: { temp: 25, desc: "soleil", icon: "☀️", time: "10h40" } },
+      { day: 13, matin: { temp: 25, desc: "soleil", icon: "☀️", time: "10h40" } },
+      { day: 14, matin: { temp: 22, desc: "", icon: "☀️", time: "matin" }, apm: { temp: 27, desc: "nuageux soleil", icon: "⛅️" } },
+      { day: 15, matin: { temp: 22, desc: "", icon: "☀️", time: "matin" } },
+      { day: 16, matin: { temp: 19, desc: "", icon: "🌥️", time: "7h40" }, apm: { temp: 20, desc: "pluie", icon: "🌧️" } },
+      { day: 17, matin: { temp: 19, desc: "", icon: "☁️", time: "9h50" }, apm: { temp: 26, desc: "soleil", icon: "☀️" } },
+      { day: 18, matin: { temp: 20, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 30, desc: "soleil", icon: "☀️" } },
+      { day: 19, matin: { temp: 18, desc: "pluie", icon: "🌧️", time: "6h40" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 20, matin: { temp: 17, desc: "Mont-Dore", icon: "⛰️☁️", time: "9h40" }, apm: { temp: null, desc: "pluie", icon: "🌧️" } },
+      { day: 21, matin: { temp: 12, desc: "Mont-Dore", icon: "🌧️", time: "matin" } },
+      { day: 22, matin: { temp: 14, desc: "Mont-Dore", icon: "☁️", time: "matin" }, apm: { temp: 20, desc: "soleil", icon: "☀️" } },
+      { day: 23, matin: { temp: 12, desc: "Mont-Dore", icon: "☁️", time: "matin" }, apm: { temp: 14, desc: "nuages", icon: "⛅️" } },
+      { day: 24, matin: { temp: 11, desc: "Autoire", icon: "⛅️", time: "matin" }, apm: { temp: 22, desc: "Autoire", icon: "⛅️" } },
+      { day: 25, matin: { temp: 20, desc: "Autoire", icon: "⛅️", time: "matin" }, apm: { temp: 24, desc: "Givrand", icon: "☀️" }, note: "Autoire → Givrand" },
+      { day: 26, matin: { temp: 24, desc: "Givrand", icon: "☀️", time: "11h" } },
+      { day: 27, matin: { temp: 20, desc: "Saint-Père", icon: "☀️", time: "matin" } },
+      { day: 28, matin: { temp: 23, desc: "Givrand soleil", icon: "☀️", time: "11h" } },
+      { day: 29, matin: { temp: 24, desc: "Givrand soleil", icon: "☀️", time: "10h" } },
+      { day: 30, matin: { temp: 18, desc: "Givrand couvert", icon: "🌥️", time: "10h" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 31, matin: { temp: 23, desc: "Givrand / DinoParc", icon: "🦕☀️", time: "10h" } },
+    ],
+    août: [
+      { day: 1, matin: { temp: 18, desc: "Givrand couvert", icon: "☁️", time: "matin" }, apm: { temp: 26, desc: "accrobranche soleil", icon: "☀️" } },
+      { day: 2, matin: { temp: 18, desc: "soleil golf plage", icon: "☀️⛳", time: "matin" }, apm: { temp: 26, desc: "soleil", icon: "☀️" } },
+      { day: 3, matin: { temp: 18, desc: "dernier jour Givrand", icon: "🏖️", time: "matin" } },
+      { day: 4, matin: { temp: 18, desc: "nuageux", icon: "☁️", time: "6h40" }, apm: { temp: 30, desc: "soleil", icon: "☀️" } },
+      { day: 5, matin: { temp: 18, desc: "pluie", icon: "🌧️", time: "5h40" }, apm: { temp: 23, desc: "soleil", icon: "☀️" } },
+      { day: 6, matin: { temp: 13, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 7, matin: { temp: 16, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 27, desc: "soleil", icon: "☀️" } },
+      { day: 8, matin: { temp: 17, desc: "soleil", icon: "☀️", time: "5h40" } },
+      { day: 9, matin: { temp: 21, desc: "soleil", icon: "☀️", time: "10h" } },
+      { day: 10, matin: { temp: 21, desc: "soleil", icon: "☀️", time: "matin" } },
+      { day: 11, matin: { temp: 15, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 32, desc: "soleil", icon: "☀️" } },
+      { day: 12, matin: { temp: 19, desc: "soleil", icon: "☀️", time: "5h40" }, apm: { temp: 37, desc: "soleil", icon: "🔥" } },
+      { day: 13, matin: { temp: 20, desc: "", icon: "☁️", time: "5h40" }, apm: { temp: 35, desc: "averses", icon: "⛈️" } },
+      { day: 14, matin: { temp: 20, desc: "", icon: "☁️", time: "5h40" }, apm: { temp: 31, desc: "soleil", icon: "☀️" } },
+      { day: 15, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "7h40" } },
+      { day: 16, matin: { temp: 20, desc: "", icon: "☁️", time: "10h" }, apm: { temp: 27, desc: "soleil", icon: "☀️" } },
+      { day: 17, matin: { temp: 21, desc: "soleil", icon: "☀️", time: "10h" } },
+      { day: 18, matin: { temp: 17, desc: "soleil", icon: "☀️", time: "8h" } },
+      { day: 19, matin: { temp: 20, desc: "", icon: "☁️", time: "10h" }, apm: { temp: 27, desc: "nuageux", icon: "🌥️" } },
+      { day: 20, matin: { temp: 18, desc: "", icon: "☁️", time: "10h" }, apm: { temp: 22, desc: "nuageux", icon: "🌥️" } },
+      { day: 21, matin: { temp: 15, desc: "nuageux", icon: "☁️", time: "10h" }, apm: { temp: 22, desc: "nuageux", icon: "🌥️" } },
+      { day: 22, matin: { temp: 15, desc: "nuageux", icon: "☁️", time: "10h" } },
+      { day: 23, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "7h40" }, apm: { temp: 19, desc: "soleil", icon: "☀️" } },
+      { day: 24, matin: { temp: 12, desc: "soleil", icon: "☀️", time: "matin" } },
+      { day: 25, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "11h" }, apm: { temp: 28, desc: "soleil", icon: "☀️" } },
+      { day: 26, matin: { temp: 15, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 28, desc: "soleil", icon: "☀️" } },
+      { day: 27, matin: { temp: 17, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 24, desc: "soleil", icon: "☀️" } },
+      { day: 28, matin: { temp: 17, desc: "", icon: "🌥️", time: "10h" } },
+      { day: 29, matin: { temp: 12, desc: "pluie", icon: "🌧️", time: "9h" }, apm: { temp: 17, desc: "pluie", icon: "🌧️" } },
+      { day: 30, matin: { temp: 15, desc: "soleil", icon: "☀️", time: "matin" }, apm: { temp: 20, desc: "pluie un peu", icon: "🌦️" } },
+      { day: 31, matin: { temp: 15, desc: "pluie", icon: "🌧️", time: "matin" } },
+    ],
+    septembre: [
+      { day: 1, matin: { temp: 13, desc: "soleil / pluie", icon: "🌦️", time: "matin" }, apm: { temp: 20, desc: "", icon: "🌦️" } },
+      { day: 2, matin: { temp: 12, desc: "humide", icon: "💧", time: "5h40" }, apm: { temp: 17, desc: "pluie", icon: "🌧️" } },
+      { day: 3, matin: { temp: 16, desc: "", icon: "🌤️", time: "5h40" } },
+      { day: 4, matin: { temp: 16, desc: "", icon: "🌤️", time: "5h40" } },
+      { day: 5, matin: { temp: 14, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 20, desc: "soleil", icon: "☀️" } },
+      { day: 6, matin: { temp: 13, desc: "soleil", icon: "☀️", time: "matin" }, apm: { temp: 25, desc: "soleil", icon: "☀️" } },
+      { day: 7, matin: { temp: 18, desc: "soleil", icon: "☀️", time: "matin" }, apm: { temp: 28, desc: "soleil", icon: "☀️" } },
+      { day: 8, matin: { temp: 17, desc: "", icon: "🌥️", time: "matin" }, apm: { temp: 23, desc: "soleil", icon: "☀️" } },
+      { day: 9, matin: { temp: 15, desc: "", icon: "🌤️", time: "5h40" } },
+      { day: 10, matin: { temp: 11, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 20, desc: "pluie", icon: "🌧️" } },
+      { day: 11, matin: { temp: 13, desc: "", icon: "🌤️", time: "5h40" } },
+      { day: 12, matin: { temp: 12, desc: "", icon: "🌤️", time: "5h40" }, apm: { temp: 22, desc: "soleil", icon: "☀️" } },
+      { day: 13, matin: { temp: 13, desc: "", icon: "🌥️", time: "6h40" }, apm: { temp: 19, desc: "", icon: "🌥️" } },
+      { day: 14, matin: { temp: 13, desc: "pluie", icon: "🌧️", time: "matin" }, apm: { temp: 19, desc: "pluie", icon: "🌧️" } },
+      { day: 15, matin: { temp: 14, desc: "nuageux", icon: "☁️", time: "matin" }, apm: { temp: 19, desc: "soleil vent", icon: "💨☀️" } },
+      { day: 16, matin: { temp: 14, desc: "nuageux", icon: "☁️", time: "matin" } },
+      { day: 17, matin: { temp: 14, desc: "mitigé", icon: "⛅️", time: "matin" }, apm: { temp: 24, desc: "soleil", icon: "☀️" }
