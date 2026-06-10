@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Météo · Domont 2024–2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0c1829; --card: #0f2035; --bord: #1a3658;
+  --muted: #5a7a94; --text: #e2eaf2;
+  --c24: #e8a045; --c25: #d14a4a; --c26: #4b9fd4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; font-size: 14px; }
+
+header {
+  background: linear-gradient(160deg, #0f2035 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--bord);
+  padding: 20px 16px 16px;
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.header-icon { font-size: 34px; line-height: 1; }
+h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+.subtitle { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.year-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.year-btn {
+  padding: 5px 16px; border-radius: 20px; border: 1.5px solid var(--bord);
+  background: transparent; color: var(--muted); font-weight: 800;
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.year-btn.y2024 { border-color: var(--c24); background: rgba(232,160,69,0.12); color: var(--c24); box-shadow: 0 0 12px rgba(232,160,69,0.2); }
+.year-btn.y2025 { border-color: var(--c25); background: rgba(209,74,74,0.12); color: var(--c25); box-shadow: 0 0 12px rgba(209,74,74,0.2); }
+.year-btn.y2026 { border-color: var(--c26); background: rgba(75,159,212,0.12); color: var(--c26); box-shadow: 0 0 12px rgba(75,159,212,0.2); }
+.partial-note { font-size: 10px; color: var(--muted); }
+
+.tabs { display: flex; background: #0d1f35; border-bottom: 1px solid var(--bord); }
+.tab-btn {
+  flex: 1; padding: 10px 4px; border: none; background: transparent;
+  border-bottom: 2px solid transparent; color: var(--muted);
+  cursor: pointer; font-size: 10px; font-weight: 700;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: all 0.2s;
+}
+.tab-btn.active { color: var(--text); border-bottom-color: var(--c26); }
+.tab-icon { font-size: 17px; }
+
+.content { padding: 16px; max-width: 720px; margin: 0 auto; }
+.section { display: none; }
+.section.active { display: block; }
+
+.card { background: var(--card); border: 1px solid var(--bord); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.card-title { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+
+/* HEATMAP */
+.hm-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+.hm-label { font-size: 11px; font-weight: 800; width: 36px; flex-shrink: 0; }
+.hm-cells { display: flex; gap: 4px; flex: 1; }
+.hm-cell {
+  flex: 1; height: 30px; border-radius: 5px;
+  transition: transform 0.15s, opacity 0.2s; cursor: default;
+  position: relative;
+}
+.hm-cell:hover { transform: scaleY(1.2); z-index: 1; }
+.hm-months { display: flex; padding-left: 41px; gap: 4px; margin-top: 3px; }
+.hm-month { flex: 1; text-align: center; font-size: 8px; color: #2d4a66; }
+.legend { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 4px; }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.leg-label { font-size: 9px; color: var(--muted); }
+
+/* YEAR CARDS */
+.year-card { background: var(--card); border: 1px solid var(--bord); border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
+.yc-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+.yc-name { font-weight: 900; font-size: 22px; }
+.yc-stats { display: flex; gap: 14px; align-items: center; }
+.yc-stat { font-weight: 700; font-size: 14px; }
+.yc-stat span { font-weight: 400; font-size: 11px; color: var(--muted); }
+.badge { font-size: 10px; color: var(--muted); background: var(--bord); padding: 2px 8px; border-radius: 12px; }
+.yc-body { padding: 12px 16px; }
+.hl { display: flex; gap: 8px; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+.hl-arrow { color: #2d4a66; }
+
+/* MODE SWITCHER */
+.mode-sw { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--bord); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+.mode-btn { flex: 1; padding: 8px 4px; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.mode-btn.active { background: #1a3658; color: var(--text); }
+
+/* TABLE */
+.dt { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dt th { text-align: center; padding-bottom: 8px; font-weight: 700; }
+.dt th:first-child { text-align: left; color: var(--muted); font-weight: 600; }
+.dt td { text-align: center; padding: 7px 0; font-weight: 700; border-top: 1px solid var(--bord); }
+.dt td:first-child { text-align: left; color: #6b8ba4; font-weight: 400; }
+
+/* CONDITIONS */
+.cond-grid { display: grid; gap: 10px; margin-bottom: 14px; }
+.cond-card { background: var(--card); border: 1px solid var(--bord); border-radius: 14px; padding: 12px; }
+.cond-year { font-weight: 900; font-size: 16px; margin-bottom: 10px; }
+.cond-row { margin-bottom: 8px; }
+.cond-hd { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+.cond-track { background: #0c1829; border-radius: 99px; height: 4px; }
+.cond-fill { height: 4px; border-radius: 99px; }
+
+/* RECORDS */
+.abs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.abs-card { background: var(--bg); border-radius: 12px; padding: 16px 10px; text-align: center; }
+.abs-ico { font-size: 28px; line-height: 1; margin-bottom: 6px; }
+.abs-temp { font-size: 30px; font-weight: 900; margin-bottom: 4px; }
+.abs-sub { font-size: 10px; color: var(--muted); }
+.amplitude { background: var(--bg); border-radius: 10px; padding: 10px 14px; font-size: 12px; color: var(--muted); text-align: center; }
+.amplitude b { color: var(--text); font-size: 15px; }
+
+.rec-item { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.rec-ico { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; }
+.rec-info { flex: 1; }
+.rec-label { font-size: 13px; font-weight: 500; }
+.rec-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.rec-temp { font-size: 16px; font-weight: 900; flex-shrink: 0; }
+
+.moment { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.moment-ico { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+.moment-label { font-size: 13px; font-weight: 500; }
+.moment-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+footer { text-align: center; padding: 24px 16px; color: #2d4a66; font-size: 11px; border-top: 1px solid var(--bord); margin-top: 8px; }
+
+@media (min-width: 480px) { .cond-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 600px) { header { padding: 24px 24px 18px; } .content { padding: 20px 24px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="header-icon">🌦️</div>
+    <div>
+      <h1>Journal Météo</h1>
+      <p class="subtitle">Domont &amp; voyages · 2024 → 2026</p>
+    </div>
+  </div>
+  <div class="year-filters">
+    <button class="year-btn y2024" data-year="2024" onclick="toggleYear(2024)">2024</button>
+    <button class="year-btn y2025" data-year="2025" onclick="toggleYear(2025)">2025</button>
+    <button class="year-btn y2026" data-year="2026" onclick="toggleYear(2026)">2026 *</button>
+    <span class="partial-note">* données janv.–juin</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('apercu',this)"><span class="tab-icon">🗓️</span>Aperçu</button>
+  <button class="tab-btn" onclick="switchTab('temperatures',this)"><span class="tab-icon">🌡️</span>Températures</button>
+  <button class="tab-btn" onclick="switchTab('conditions',this)"><span class="tab-icon">🌤️</span>Conditions</button>
+  <button class="tab-btn" onclick="switchTab('records',this)"><span class="tab-icon">🏆</span>Records</button>
+</div>
+
+<div class="content">
+
+  <!-- APERÇU -->
+  <div id="apercu" class="section active">
+    <div class="card">
+      <div class="card-title">🌡 Carte thermique · températures après-midi</div>
+      <div id="heatmap"></div>
+      <div class="legend" id="hmLegend"></div>
+    </div>
+    <div id="yearCards"></div>
+  </div>
+
+  <!-- TEMPÉRATURES -->
+  <div id="temperatures" class="section">
+    <div class="mode-sw">
+      <button class="mode-btn active" onclick="switchMode('aprem',this)">☀️ Après-midi</button>
+      <button class="mode-btn" onclick="switchMode('matin',this)">🌅 Matin</button>
+      <button class="mode-btn" onclick="switchMode('max',this)">🔥 Maximum</button>
+    </div>
+    <div class="card">
+      <div class="card-title" id="chartTitle">Températures moyennes mensuelles · Après-midi</div>
+      <canvas id="tempChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Tableau comparatif</div>
+      <div id="tempTable"></div>
+    </div>
+  </div>
+
+  <!-- CONDITIONS -->
+  <div id="conditions" class="section">
+    <div class="cond-grid" id="condCards"></div>
+    <div class="card">
+      <div class="card-title">☀️ Ensoleillement estimé — par mois (%)</div>
+      <canvas id="sunChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🌧️ Pluviosité estimée — par mois (%)</div>
+      <canvas id="rainChart"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">ℹ️ Note sur les données</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.6">Les pourcentages sont des estimations basées sur les notes journalières (présence de mentions ☀️ / 🌧️ / ❄️ / ☁️). Les moyennes de température sont des moyennes des relevés disponibles, non des données de stations officielles.</p>
+    </div>
+  </div>
+
+  <!-- RECORDS -->
+  <div id="records" class="section">
+    <div class="card">
+      <div class="card-title">🏆 Records absolus · 2024–2026</div>
+      <div class="abs-grid">
+        <div class="abs-card">
+          <div class="abs-ico">🥶</div>
+          <div class="abs-temp" style="color:#60a5fa">−8°C</div>
+          <div class="abs-sub">Ressenti · 7 janv. 2026</div>
+        </div>
+        <div class="abs-card">
+          <div class="abs-ico">🔥</div>
+          <div class="abs-temp" style="color:#f87171">40°C</div>
+          <div class="abs-sub">1er juillet 2025</div>
+        </div>
+      </div>
+      <div class="amplitude">Amplitude totale observée : <b>48°C</b> sur 3 ans</div>
+    </div>
+    <div id="yearRecords"></div>
+    <div class="card">
+      <div class="card-title">📅 Moments marquants</div>
+      <div id="moments"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Journal météo personnel · Domont (95) · 2024–2026 · données brutes issues de notes quotidiennes</footer>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  DONNÉES
+// ════════════════════════════════════════════════════════
+const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Juil','Août','Sep','Oct','Nov','Déc'];
+const YC = { 2024:'#e8a045', 2025:'#d14a4a', 2026:'#4b9fd4' };
+
+const DATA = {
+  2024: {
+    matin:  [2,  5,  5,  9, 13, 12, 17, 18, 13, 10,  7,  4],
+    aprem:  [9, 13, 15, 20, 22, 23, 26, 29, 21, 17, 11,  9],
+    min:    [-4.5, 1, 0, 2.5, 10, 9, 13, 11, 7, 5, -1, 0.5],
+    max:    [14, 19, 20, 27, 28, 30, 30, 37, 30, 24, 17, 15],
+    sun:    [15, 28, 35, 55, 45, 60, 60, 65, 50, 35, 20, 10],
+    rain:   [50, 42, 40, 25, 35, 25, 25, 20, 35, 40, 45, 40],
+    snow:   [25,  5,  0,  0,  0,  0,  0,  0,  0,  0, 10,  5],
+    gmin: -9, gmax: 37,
+    hl: [
+      'Vague de froid janvier — ressenti −9°C',
+      'Chute de neige de 30 cm le 21 novembre',
+      'Canicule parisienne en août (37°C)',
+      'Été indien septembre (30°C parfait !)',
+    ],
+    rec: [
+      ['❄️','Janv. 16','Vague de froid',-4.5,'Ressenti −9°C'],
+      ['❄️','Nov. 21','Chute de neige',-1,'30 cm !'],
+      ['🔥','Août','Canicule Paris',37,''],
+      ['☀️','Sept. 1','Été indien',30,'Parfait !'],
+    ],
+  },
+  2025: {
+    matin:  [1,  3,  4, 10, 12, 15, 19, 18, 14, 10,  4,  3],
+    aprem:  [6, 14, 14, 20, 22, 27, 31, 28, 22, 18,  9,  8],
+    min:    [-4,-3, 0, 4, 8, 11, 12, 13, 9, 5,-1.5,-3],
+    max:    [11, 19, 20, 28, 30, 38, 40, 37, 29, 25, 18, 15],
+    sun:    [20, 35, 40, 50, 50, 65, 70, 65, 55, 40, 15, 10],
+    rain:   [45, 35, 35, 30, 30, 20, 15, 20, 30, 35, 50, 45],
+    snow:   [10,  0,  0,  0,  0,  0,  0,  0,  0,  0,  8,  5],
+    gmin: -4, gmax: 40,
+    hl: [
+      'Canicule historique juin–juillet — 40°C !',
+      'Tornade à Eaubonne (20 octobre)',
+      'Hiver relativement doux (min −4°C)',
+      'Été très chaud de juin à août',
+    ],
+    rec: [
+      ['🔥','Juil. 1','Record absolu',40,'40°C !'],
+      ['🔥','Juin 30','Canicule',38,'Extrême'],
+      ['❄️','Janv. 14','Grand froid',-4,'Matin'],
+      ['🌪️','Oct. 20','Tornade',null,'Eaubonne'],
+    ],
+  },
+  2026: {
+    matin:  [0,  5,  8,  8, 12, 13, null,null,null,null,null,null],
+    aprem:  [7, 13, 15, 21, 24, 20, null,null,null,null,null,null],
+    min:    [-8,-7,  3,1.5,  3, 10, null,null,null,null,null,null],
+    max:    [12, 20, 18, 27, 34, 25, null,null,null,null,null,null],
+    sun:    [20, 30, 50, 60, 55, 40, null,null,null,null,null,null],
+    rain:   [40, 35, 25, 20, 30, 35, null,null,null,null,null,null],
+    snow:   [30,  5,  0,  0,  0,  0, null,null,null,null,null,null],
+    gmin: -8, gmax: 34, partial: true,
+    hl: [
+      'Hiver froid — ressenti −8°C le 7 janvier',
+      '"Semaine parfaite" mars 2–5 (17–18°C soleil)',
+      'Vacances Pornic / Givrand (jusqu\'à 27°C)',
+      'Canicule précoce fin mai (34°C dès le 24 mai)',
+    ],
+    rec: [
+      ['❄️','Janv. 7','Grand froid (ressenti)',-8,''],
+      ['❄️','Févr. 14','Gel (ressenti)',-7,''],
+      ['☀️','Avr. 9','Vacances Pornic',27,'Givrand ☀️'],
+      ['🔥','Mai 24','Canicule précoce',34,'!'],
+    ],
+  },
+};
+
+const MOMENTS = [
+  ['🏖️','Vacances Pornic 2026','21–29 avr. · jusqu\'à 27°C · Givrand/Saint-Père'],
+  ['🔥','Canicule historique 2025','Juin–Juil · pic 40°C le 1er juillet'],
+  ['❄️','Semaine glaciale 2024','Janv. 14–19 · verglas · −4.5°C (ressenti −9°C)'],
+  ['🌸','"Semaine parfaite" mars 2026','2–5 mars · 17–18°C soleil continu'],
+  ['🌨️','Neige 30 cm novembre 2024','21 nov. · première grande chute depuis longtemps'],
+  ['🔥','Canicule précoce 2026','22–30 mai · jusqu\'à 34°C'],
+  ['🚢','Voyage Amiens / Cayeux 2024','10–11 mai · 24–27°C superbe'],
+  ['🌪️','Tornade Eaubonne','20 oct. 2025'],
+];
+
+// ════════════════════════════════════════════════════════
+//  ÉTAT
+// ════════════════════════════════════════════════════════
+let selectedYears = [2024, 2025, 2026];
+let currentMode   = 'aprem';
+let charts = {};
+
+// ════════════════════════════════════════════════════════
+//  COULEUR TEMPÉRATURE
+// ════════════════════════════════════════════════════════
+function tc(t) {
+  if (t == null) return '#0c1829';
+  if (t < -3)  return '#1d4ed8';
+  if (t <  2)  return '#2563eb';
+  if (t <  7)  return '#0891b2';
+  if (t < 12)  return '#0d9488';
+  if (t < 17)  return '#16a34a';
+  if (t < 22)  return '#84cc16';
+  if (t < 27)  return '#eab308';
+  if (t < 32)  return '#f97316';
+  return '#ef4444';
+}
+
+// ════════════════════════════════════════════════════════
+//  HEATMAP
+// ════════════════════════════════════════════════════════
+function renderHeatmap() {
+  const el = document.getElementById('heatmap');
+  let html = '';
+  [2024,2025,2026].forEach(year => {
+    if (!selectedYears.includes(year)) return;
+    html += `<div class="hm-row">
+      <div class="hm-label" style="color:${YC[year]}">${year}</div>
+      <div class="hm-cells">`;
+    MONTHS.forEach((m,i) => {
+      const t = DATA[year].aprem[i];
+      const bg = tc(t);
+      const op = t != null ? 1 : 0.1;
+      const glow = t != null && t >= 28 ? `box-shadow:0 0 9px ${tc(t)}55;` : '';
+      html += `<div class="hm-cell" title="${m} ${year} : ${t != null ? t+'°C' : '—'}" style="background:${bg};opacity:${op};${glow}"></div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `<div class="hm-months">${MONTHS.map(m=>`<div class="hm-month">${m[0]}</div>`).join('')}</div>`;
+  el.innerHTML = html;
+
+  document.getElementById('hmLegend').innerHTML =
+    [['#2563eb','< 2°'],['#0891b2','2–7°'],['#0d9488','7–12°'],['#16a34a','12–17°'],['#eab308','17–27°'],['#f97316','27–32°'],['#ef4444','> 32°']]
+    .map(([c,l])=>`<div class="leg-item"><div class="leg-dot" style="background:${c}"></div><div class="leg-label">${l}</div></div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  CARTES ANNÉES
+// ════════════════════════════════════════════════════════
+function renderYearCards() {
+  document.getElementById('yearCards').innerHTML = [2024,2025,2026]
+    .filter(y => selectedYears.includes(y))
+    .map(year => {
+      const d = DATA[year]; const c = YC[year];
+      return `<div class="year-card">
+        <div class="yc-header" style="background:${c}15">
+          <span class="yc-name" style="color:${c}">${year}</span>
+          <div class="yc-stats">
+            ${d.partial?`<span class="badge">Janv.–Juin</span>`:''}
+            <span class="yc-stat" style="color:#60a5fa">${d.gmin}°<span> min</span></span>
+            <span class="yc-stat" style="color:#f87171">${d.gmax}°<span> max</span></span>
+          </div>
+        </div>
+        <div class="yc-body">${d.hl.map(h=>`<div class="hl"><span class="hl-arrow">›</span>${h}</div>`).join('')}</div>
+      </div>`;
+    }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  CHART.JS — OPTIONS COMMUNES
+// ════════════════════════════════════════════════════════
+Chart.defaults.color = '#5a7a94';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+const baseOpts = {
+  responsive: true,
+  animation: { duration: 400 },
+  plugins: {
+    legend: { labels: { color: '#5a7a94', font: { size: 11 }, boxWidth: 12 } },
+    tooltip: {
+      backgroundColor: '#0f2035', borderColor: '#1a3658', borderWidth: 1,
+      titleColor: '#5a7a94', bodyColor: '#e2eaf2', padding: 10,
+    },
+  },
+  scales: {
+    x: { ticks: { color: '#5a7a94', font: { size: 10 } }, grid: { color: '#1a3658' } },
+    y: { ticks: { color: '#5a7a94', font: { size: 10 } }, grid: { color: '#1a3658' } },
+  },
+};
+
+// ════════════════════════════════════════════════════════
+//  TEMPÉRATURES
+// ════════════════════════════════════════════════════════
+const modeTitles = { aprem:'Températures moyennes · Après-midi', matin:'Températures moyennes · Matin', max:'Températures maximales' };
+
+function renderTempChart() {
+  const ctx = document.getElementById('tempChart').getContext('2d');
+  if (charts.temp) charts.temp.destroy();
+  charts.temp = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: selectedYears.map(y => ({
+        label: `${y}`,
+        data: DATA[y][currentMode],
+        borderColor: YC[y],
+        backgroundColor: YC[y]+'15',
+        tension: 0.4,
+        borderWidth: 2.5,
+        pointRadius: 3.5,
+        pointBackgroundColor: YC[y],
+        spanGaps: false,
+      })),
+    },
+    options: { ...baseOpts,
+      scales: { ...baseOpts.scales,
+        y: { ...baseOpts.scales.y, min: -14, max: 44,
+          ticks: { ...baseOpts.scales.y.ticks, callback: v => v+'°' } } },
+      plugins: { ...baseOpts.plugins,
+        tooltip: { ...baseOpts.plugins.tooltip,
+          callbacks: { label: c => ` ${c.dataset.label} : ${c.raw != null ? c.raw+'°C' : '—'}` } } },
+    },
+  });
+  document.getElementById('chartTitle').textContent = modeTitles[currentMode];
+}
+
+function renderTempTable() {
+  let h = `<table class="dt"><thead><tr><th>Mois</th>`;
+  selectedYears.forEach(y => h += `<th style="color:${YC[y]}">${y}</th>`);
+  h += `</tr></thead><tbody>`;
+  MONTHS.forEach((m,i) => {
+    h += `<tr><td>${m}</td>`;
+    selectedYears.forEach(y => {
+      const v = DATA[y][currentMode][i];
+      h += `<td style="color:${v!=null?tc(v):'#1a3658'}">${v!=null?v+'°':'–'}</td>`;
+    });
+    h += `</tr>`;
+  });
+  h += `</tbody></table>`;
+  document.getElementById('tempTable').innerHTML = h;
+}
+
+// ════════════════════════════════════════════════════════
+//  CONDITIONS
+// ════════════════════════════════════════════════════════
+function renderCondCards() {
+  const el = document.getElementById('condCards');
+  el.style.gridTemplateColumns = `repeat(${selectedYears.length},1fr)`;
+  el.innerHTML = selectedYears.map(y => {
+    const d = DATA[y]; const c = YC[y];
+    const valid = d.sun.filter(v=>v!=null).length;
+    const avg = arr => Math.round(arr.filter(v=>v!=null).reduce((s,v)=>s+v,0)/valid);
+    const su=avg(d.sun), ra=avg(d.rain), sn=avg(d.snow);
+    return `<div class="cond-card">
+      <div class="cond-year" style="color:${c}">${y}</div>
+      ${[['☀️',su,'#eab308'],['🌧️',ra,'#60a5fa'],['❄️',sn,'#e2e8f0']].map(([ic,v,col])=>`
+        <div class="cond-row">
+          <div class="cond-hd"><span>${ic}</span><span style="color:${col};font-weight:700">${v}%</span></div>
+          <div class="cond-track"><div class="cond-fill" style="background:${col};width:${Math.min(v,100)}%"></div></div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function makeBarDatasets(key) {
+  return selectedYears.map(y => ({
+    label: `${y}`, data: DATA[y][key],
+    backgroundColor: YC[y]+'cc', borderRadius: 3,
+  }));
+}
+
+function renderCondCharts() {
+  const pOpts = { ...baseOpts,
+    scales: { ...baseOpts.scales,
+      y: { ...baseOpts.scales.y, min:0, max:100,
+        ticks: { ...baseOpts.scales.y.ticks, callback: v=>v+'%' } } },
+    plugins: { ...baseOpts.plugins,
+      tooltip: { ...baseOpts.plugins.tooltip,
+        callbacks: { label: c => ` ${c.dataset.label} : ${c.raw!=null?c.raw+'%':'—'}` } } },
+  };
+  ['sun','rain'].forEach(k => {
+    const id = k==='sun'?'sunChart':'rainChart';
+    if (charts[k]) charts[k].destroy();
+    charts[k] = new Chart(document.getElementById(id).getContext('2d'), {
+      type: 'bar',
+      data: { labels: MONTHS, datasets: makeBarDatasets(k) },
+      options: pOpts,
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  RECORDS
+// ════════════════════════════════════════════════════════
+function renderRecords() {
+  document.getElementById('yearRecords').innerHTML = [2024,2025,2026].map(year => {
+    const d = DATA[year]; const c = YC[year];
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="color:${c};font-weight:900;font-size:18px">${year}</span>
+        ${d.partial?`<span class="badge">Janv.–Juin</span>`:''}
+      </div>
+      ${d.rec.map(([ico,date,label,temp,note])=>{
+        const col = temp==null?'':temp<0?'#60a5fa':temp>30?'#f87171':'#e8a045';
+        return `<div class="rec-item">
+          <span class="rec-ico">${ico}</span>
+          <div class="rec-info">
+            <div class="rec-label">${label}</div>
+            <div class="rec-sub">${date}${note?' · '+note:''}</div>
+          </div>
+          ${temp!=null?`<div class="rec-temp" style="color:${col}">${temp>0?'+':''}${temp}°</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  document.getElementById('moments').innerHTML = MOMENTS.map(([ico,label,detail]) =>
+    `<div class="moment">
+      <span class="moment-ico">${ico}</span>
+      <div><div class="moment-label">${label}</div><div class="moment-sub">${detail}</div></div>
+    </div>`
+  ).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  INTERACTIONS
+// ════════════════════════════════════════════════════════
+function toggleYear(year) {
+  if (selectedYears.includes(year)) {
+    if (selectedYears.length <= 1) return;
+    selectedYears = selectedYears.filter(y => y !== year);
+  } else {
+    selectedYears = [...selectedYears, year].sort((a,b)=>a-b);
+  }
+  const btn = document.querySelector(`[data-year="${year}"]`);
+  btn.className = selectedYears.includes(year) ? `year-btn y${year}` : 'year-btn';
+  renderAll();
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function switchMode(mode, btn) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTempChart();
+  renderTempTable();
+}
+
+function renderAll() {
+  renderHeatmap();
+  renderYearCards();
+  renderTempChart();
+  renderTempTable();
+  renderCondCards();
+  renderCondCharts();
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+renderAll();
+renderRecords();
+</script>
+</body>
+</html>
